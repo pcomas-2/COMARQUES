@@ -1,4 +1,4 @@
-// DADES DE LES 42 COMARQUES EN ORDRE ALFABÈTIC I LES SEVES COORDENADES (%) SOBRE MAPA2.PNG
+// DADES DE LES 42 COMARQUES EN ORDRE ALFABÈTIC
 const comarquesData = [
   { id: "alt_camp", name: "Alt Camp", capital: "Valls", alts: ["valls"], x: 49, y: 67 },
   { id: "alt_emporda", name: "Alt Empordà", capital: "Figueres", alts: ["figueres"], x: 85, y: 23 },
@@ -54,9 +54,10 @@ let totalQuestions = 30;
 let timerInterval = null;
 let secondsElapsed = 0;
 let currentQuestionObj = null;
+let audioCtx = null;
 
-// CANVIAR DE PANTALLA EN JS AMB SEGURETAT
-function showScreen(screenId) {
+// GESTIÓ SEGURA DE PANTALLES
+window.showScreen = function(screenId) {
   const screens = ['screen-start', 'screen-quiz', 'screen-results'];
   screens.forEach(id => {
     const el = document.getElementById(id);
@@ -70,37 +71,47 @@ function showScreen(screenId) {
       }
     }
   });
-}
+};
 
-// EFECTES DE SO (Web Audio API)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// SO ÀUDIO ROBUST
 function playSound(type) {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    if (!audioCtx) return;
 
-  if (type === 'correct') {
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.35);
-  } else if (type === 'incorrect') {
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(174.61, audioCtx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.4);
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    } else if (type === 'incorrect') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(174.61, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    }
+  } catch(e) {
+    console.log("Audio no suportat o bloquejat:", e);
   }
 }
 
-// NORMALITZACIÓ DE TEXT (Ignora accents, majúscules i articles)
+// NORMALITZACIÓ DE TEXT
 function normalizeText(text) {
   if (!text) return '';
   let s = text.toLowerCase().trim();
@@ -112,18 +123,21 @@ function normalizeText(text) {
   return s;
 }
 
-function selectMode(mode) {
+window.selectMode = function(mode) {
   selectedGameMode = mode;
-  document.getElementById('btn-mode-30').classList.toggle('selected', mode === '30');
-  document.getElementById('btn-mode-all').classList.toggle('selected', mode === 'all');
-}
+  const btn30 = document.getElementById('btn-mode-30');
+  const btnAll = document.getElementById('btn-mode-all');
+  if (btn30) btn30.classList.toggle('selected', mode === '30');
+  if (btnAll) btnAll.classList.toggle('selected', mode === 'all');
+};
 
-function onMapError() {
-  alert("⚠️ No s'ha pogut trobar la imatge 'mapa2.png'. Comprova que estigui a la mateixa carpeta que el fitxer index.html!");
-}
+window.onMapError = function() {
+  alert("⚠️ Atenció: No s'ha pogut carregar la imatge 'mapa2.png'. Assegura't que l'arxiu estigui guardat a la mateixa carpeta!");
+};
 
 function renderPins(pool) {
   const container = document.getElementById('pins-container');
+  if (!container) return;
   container.innerHTML = '';
 
   pool.forEach(c => {
@@ -139,8 +153,10 @@ function renderPins(pool) {
   });
 }
 
-function startQuiz() {
-  const nameInput = document.getElementById('student-name').value.trim();
+window.startQuiz = function() {
+  const nameEl = document.getElementById('student-name');
+  const nameInput = nameEl ? nameEl.value.trim() : '';
+
   if (!nameInput) {
     alert("Si us plau, escriu el teu nom per començar!");
     return;
@@ -162,11 +178,11 @@ function startQuiz() {
   score = 0;
   secondsElapsed = 0;
 
-  showScreen('screen-quiz');
+  window.showScreen('screen-quiz');
   renderPins(pool);
   startTimer();
   showQuestion();
-}
+};
 
 function startTimer() {
   clearInterval(timerInterval);
@@ -174,7 +190,8 @@ function startTimer() {
     secondsElapsed++;
     const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
     const secs = (secondsElapsed % 60).toString().padStart(2, '0');
-    document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+    const timerEl = document.getElementById('timer-display');
+    if (timerEl) timerEl.innerText = `${mins}:${secs}`;
   }, 1000);
 }
 
@@ -183,16 +200,24 @@ function showQuestion() {
     el.classList.remove('highlighted', 'correct');
   });
 
-  document.getElementById('feedback-box').className = 'feedback-message';
-  document.getElementById('feedback-box').style.display = 'none';
-  document.getElementById('user-answer').value = '';
+  const feedbackBox = document.getElementById('feedback-box');
+  if (feedbackBox) {
+    feedbackBox.className = 'feedback-message';
+    feedbackBox.style.display = 'none';
+  }
+
+  const ansInput = document.getElementById('user-answer');
+  if (ansInput) ansInput.value = '';
 
   currentQuestionObj = activeQuestions[currentQuestionIdx];
   const c = currentQuestionObj.comarca;
 
-  document.getElementById('q-counter').innerText = `${currentQuestionIdx + 1}/${totalQuestions}`;
+  const qCounterEl = document.getElementById('q-counter');
+  if (qCounterEl) qCounterEl.innerText = `${currentQuestionIdx + 1}/${totalQuestions}`;
+
   const currentAcc = currentQuestionIdx === 0 ? 0 : Math.round((score / currentQuestionIdx) * 100);
-  document.getElementById('accuracy-display').innerText = `${currentAcc}%`;
+  const accEl = document.getElementById('accuracy-display');
+  if (accEl) accEl.innerText = `${currentAcc}%`;
 
   const titleEl = document.getElementById('question-type-title');
   const promptEl = document.getElementById('question-text');
@@ -200,24 +225,24 @@ function showQuestion() {
   const mapInstruction = document.getElementById('map-instruction');
 
   if (currentQuestionObj.type === 0) {
-    titleEl.innerText = "🏷️ Nom de la Comarca";
-    promptEl.innerText = "Quina és la comarca del punt vermell destacat al mapa?";
+    if (titleEl) titleEl.innerText = "🏷️ Nom de la Comarca";
+    if (promptEl) promptEl.innerText = "Quina és la comarca del punt vermell destacat al mapa?";
     highlightPinOnMap(c.id);
-    inputForm.style.display = 'flex';
-    mapInstruction.style.display = 'none';
-    document.getElementById('user-answer').focus();
+    if (inputForm) inputForm.style.display = 'flex';
+    if (mapInstruction) mapInstruction.style.display = 'none';
+    if (ansInput) ansInput.focus();
   } else if (currentQuestionObj.type === 1) {
-    titleEl.innerText = "🏛️ Capital de Comarca";
-    promptEl.innerText = `Quina és la capital de la comarca del punt destacat al mapa?`;
+    if (titleEl) titleEl.innerText = "🏛️ Capital de Comarca";
+    if (promptEl) promptEl.innerText = `Quina és la capital de la comarca del punt destacat al mapa?`;
     highlightPinOnMap(c.id);
-    inputForm.style.display = 'flex';
-    mapInstruction.style.display = 'none';
-    document.getElementById('user-answer').focus();
+    if (inputForm) inputForm.style.display = 'flex';
+    if (mapInstruction) mapInstruction.style.display = 'none';
+    if (ansInput) ansInput.focus();
   } else {
-    titleEl.innerText = "🎯 Localització al Mapa";
-    promptEl.innerText = `On està ubicada la comarca de: ${c.name}?`;
-    inputForm.style.display = 'none';
-    mapInstruction.style.display = 'block';
+    if (titleEl) titleEl.innerText = "🎯 Localització al Mapa";
+    if (promptEl) promptEl.innerText = `On està ubicada la comarca de: ${c.name}?`;
+    if (inputForm) inputForm.style.display = 'none';
+    if (mapInstruction) mapInstruction.style.display = 'block';
   }
 }
 
@@ -226,8 +251,9 @@ function highlightPinOnMap(id) {
   if (pin) pin.classList.add('highlighted');
 }
 
-function checkAnswer() {
-  const rawUserAns = document.getElementById('user-answer').value;
+window.checkAnswer = function() {
+  const ansInput = document.getElementById('user-answer');
+  const rawUserAns = ansInput ? ansInput.value : '';
   const userNorm = normalizeText(rawUserAns);
   const c = currentQuestionObj.comarca;
   let isCorrect = false;
@@ -244,7 +270,7 @@ function checkAnswer() {
   }
 
   processResult(isCorrect, expectedText);
-}
+};
 
 function onPinClick(clickedComarca) {
   if (!currentQuestionObj || currentQuestionObj.type !== 2) return;
@@ -259,17 +285,21 @@ function processResult(isCorrect, expectedAnswer) {
   if (isCorrect) {
     score++;
     playSound('correct');
-    feedbackBox.innerText = "✨ Molt bé! Resposta Correcta!";
-    feedbackBox.className = "feedback-message correct";
+    if (feedbackBox) {
+      feedbackBox.innerText = "✨ Molt bé! Resposta Correcta!";
+      feedbackBox.className = "feedback-message correct";
+    }
     const targetPin = document.getElementById(`pin-${currentQuestionObj.comarca.id}`);
     if (targetPin) targetPin.classList.add('correct');
   } else {
     playSound('incorrect');
-    feedbackBox.innerText = `❌ Incorrecte. La resposta correcta era: ${expectedAnswer}`;
-    feedbackBox.className = "feedback-message incorrect";
+    if (feedbackBox) {
+      feedbackBox.innerText = `❌ Incorrecte. La resposta correcta era: ${expectedAnswer}`;
+      feedbackBox.className = "feedback-message incorrect";
+    }
   }
 
-  feedbackBox.style.display = 'block';
+  if (feedbackBox) feedbackBox.style.display = 'block';
 
   setTimeout(() => {
     currentQuestionIdx++;
@@ -284,16 +314,21 @@ function processResult(isCorrect, expectedAnswer) {
 function finishQuiz() {
   clearInterval(timerInterval);
 
-  showScreen('screen-results');
+  window.showScreen('screen-results');
 
   const accuracy = Math.round((score / totalQuestions) * 100);
   const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
   const secs = (secondsElapsed % 60).toString().padStart(2, '0');
   const timeFormatted = `${mins}:${secs}`;
 
-  document.getElementById('res-score').innerText = `${score} / ${totalQuestions}`;
-  document.getElementById('res-accuracy').innerText = `${accuracy}%`;
-  document.getElementById('res-time').innerText = timeFormatted;
+  const resScoreEl = document.getElementById('res-score');
+  if (resScoreEl) resScoreEl.innerText = `${score} / ${totalQuestions}`;
+
+  const resAccEl = document.getElementById('res-accuracy');
+  if (resAccEl) resAccEl.innerText = `${accuracy}%`;
+
+  const resTimeEl = document.getElementById('res-time');
+  if (resTimeEl) resTimeEl.innerText = timeFormatted;
 
   saveScoreToLeaderboard(studentName, selectedGameMode, score, timeFormatted, accuracy);
 }
@@ -317,6 +352,7 @@ function saveScoreToLeaderboard(name, mode, scoreVal, timeVal, accuracyVal) {
 
 function renderLeaderboard() {
   const tbody = document.getElementById('leaderboard-body');
+  if (!tbody) return;
   let leaderboard = JSON.parse(localStorage.getItem('comarques_leaderboard') || '[]');
 
   if (leaderboard.length === 0) {
@@ -342,15 +378,17 @@ function escapeHtml(str) {
   });
 }
 
-function resetToStart() {
-  showScreen('screen-start');
+window.resetToStart = function() {
+  window.showScreen('screen-start');
   renderLeaderboard();
-}
+};
 
-document.getElementById('user-answer').addEventListener('keyup', function(e) {
-  if (e.key === 'Enter') checkAnswer();
-});
-
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   renderLeaderboard();
+  const inputEl = document.getElementById('user-answer');
+  if (inputEl) {
+    inputEl.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') window.checkAnswer();
+    });
+  }
 });
