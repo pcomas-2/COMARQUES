@@ -1,4 +1,4 @@
-// DADES DE LES 42 COMARQUES EN ORDRE ALFABÈTIC I COORDENADES DE PERCENTATGE SOBRE MAPA2.PNG
+// DADES DE LES 42 COMARQUES EN ORDRE ALFABÈTIC I LES SEVES COORDENADES (%) SOBRE MAPA2.PNG
 const comarquesData = [
   { id: "alt_camp", name: "Alt Camp", capital: "Valls", alts: ["valls"], x: 49, y: 67 },
   { id: "alt_emporda", name: "Alt Empordà", capital: "Figueres", alts: ["figueres"], x: 85, y: 23 },
@@ -44,7 +44,7 @@ const comarquesData = [
   { id: "valles_oriental", name: "Vallès Oriental", capital: "Granollers", alts: ["granollers"], x: 70, y: 53 }
 ];
 
-// ESTAT DE LA APLICACIÓ
+// ESTAT DEL JOC
 let selectedGameMode = '30';
 let studentName = '';
 let activeQuestions = [];
@@ -55,7 +55,24 @@ let timerInterval = null;
 let secondsElapsed = 0;
 let currentQuestionObj = null;
 
-// SINTETITZADOR DE SO AUDIO
+// CANVIAR DE PANTALLA EN JS AMB SEGURETAT
+function showScreen(screenId) {
+  const screens = ['screen-start', 'screen-quiz', 'screen-results'];
+  screens.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (id === screenId) {
+        el.classList.add('active');
+        el.style.display = 'flex';
+      } else {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      }
+    }
+  });
+}
+
+// EFECTES DE SO (Web Audio API)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSound(type) {
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -83,7 +100,7 @@ function playSound(type) {
   }
 }
 
-// NORMALITZACIÓ DE TEXT (Ignora majúscules, accents i articles)
+// NORMALITZACIÓ DE TEXT (Ignora accents, majúscules i articles)
 function normalizeText(text) {
   if (!text) return '';
   let s = text.toLowerCase().trim();
@@ -95,19 +112,16 @@ function normalizeText(text) {
   return s;
 }
 
-// SELECCIONAR MODE DE JOC
 function selectMode(mode) {
   selectedGameMode = mode;
   document.getElementById('btn-mode-30').classList.toggle('selected', mode === '30');
   document.getElementById('btn-mode-all').classList.toggle('selected', mode === 'all');
 }
 
-// AVIS SI LA IMATGE NO CARREGA
 function onMapError() {
-  alert("⚠️ Atenció: No s'ha pogut trobar la imatge 'mapa2.png'. Comprova que l'arxiu estigui guardat a la mateixa carpeta que index.html!");
+  alert("⚠️ No s'ha pogut trobar la imatge 'mapa2.png'. Comprova que estigui a la mateixa carpeta que el fitxer index.html!");
 }
 
-// RENDERRITZAR PINS A SOBRE DE MAPA2.PNG
 function renderPins(pool) {
   const container = document.getElementById('pins-container');
   container.innerHTML = '';
@@ -125,7 +139,6 @@ function renderPins(pool) {
   });
 }
 
-// INICIAR EL QUIZZ
 function startQuiz() {
   const nameInput = document.getElementById('student-name').value.trim();
   if (!nameInput) {
@@ -149,15 +162,12 @@ function startQuiz() {
   score = 0;
   secondsElapsed = 0;
 
-  document.getElementById('screen-start').classList.remove('active');
-  document.getElementById('screen-quiz').classList.add('active');
-
+  showScreen('screen-quiz');
   renderPins(pool);
   startTimer();
   showQuestion();
 }
 
-// TEMPS
 function startTimer() {
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -168,7 +178,6 @@ function startTimer() {
   }, 1000);
 }
 
-// MOSTRAR PREGUNTA
 function showQuestion() {
   document.querySelectorAll('.comarca-pin').forEach(el => {
     el.classList.remove('highlighted', 'correct');
@@ -192,7 +201,7 @@ function showQuestion() {
 
   if (currentQuestionObj.type === 0) {
     titleEl.innerText = "🏷️ Nom de la Comarca";
-    promptEl.innerText = "Quina és la comarca amb el punt vermell il·luminat al mapa?";
+    promptEl.innerText = "Quina és la comarca del punt vermell destacat al mapa?";
     highlightPinOnMap(c.id);
     inputForm.style.display = 'flex';
     mapInstruction.style.display = 'none';
@@ -217,7 +226,6 @@ function highlightPinOnMap(id) {
   if (pin) pin.classList.add('highlighted');
 }
 
-// COMPROVAR RESPOSTA DE TEXT
 function checkAnswer() {
   const rawUserAns = document.getElementById('user-answer').value;
   const userNorm = normalizeText(rawUserAns);
@@ -238,7 +246,6 @@ function checkAnswer() {
   processResult(isCorrect, expectedText);
 }
 
-// CLICK AL PIN
 function onPinClick(clickedComarca) {
   if (!currentQuestionObj || currentQuestionObj.type !== 2) return;
   const target = currentQuestionObj.comarca;
@@ -246,7 +253,6 @@ function onPinClick(clickedComarca) {
   processResult(isCorrect, target.name);
 }
 
-// RESULTAT
 function processResult(isCorrect, expectedAnswer) {
   const feedbackBox = document.getElementById('feedback-box');
 
@@ -275,12 +281,10 @@ function processResult(isCorrect, expectedAnswer) {
   }, 1500);
 }
 
-// FINAL DEL JOC
 function finishQuiz() {
   clearInterval(timerInterval);
 
-  document.getElementById('screen-quiz').classList.remove('active');
-  document.getElementById('screen-results').classList.add('active');
+  showScreen('screen-results');
 
   const accuracy = Math.round((score / totalQuestions) * 100);
   const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
@@ -294,7 +298,6 @@ function finishQuiz() {
   saveScoreToLeaderboard(studentName, selectedGameMode, score, timeFormatted, accuracy);
 }
 
-// RÀNKING
 function saveScoreToLeaderboard(name, mode, scoreVal, timeVal, accuracyVal) {
   let leaderboard = JSON.parse(localStorage.getItem('comarques_leaderboard') || '[]');
   leaderboard.push({
@@ -302,8 +305,7 @@ function saveScoreToLeaderboard(name, mode, scoreVal, timeVal, accuracyVal) {
     mode: mode === '30' ? '30 Comarques' : 'Totes (+30)',
     score: scoreVal,
     time: timeVal,
-    accuracy: accuracyVal,
-    timestamp: Date.now()
+    accuracy: accuracyVal
   });
 
   leaderboard.sort((a, b) => b.score - a.score || a.time.localeCompare(b.time));
@@ -318,18 +320,18 @@ function renderLeaderboard() {
   let leaderboard = JSON.parse(localStorage.getItem('comarques_leaderboard') || '[]');
 
   if (leaderboard.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:#94A3B8;">Encara no hi ha registres. Sigues el primer! 🚀</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#94A3B8;">Sense registres encara. Sigues el primer! 🚀</td></tr>`;
     return;
   }
 
   tbody.innerHTML = leaderboard.map((entry, idx) => `
     <tr>
-      <td><span class="badge-top">#${idx + 1}</span></td>
+      <td><strong>#${idx + 1}</strong></td>
       <td><strong>${escapeHtml(entry.name)}</strong></td>
       <td><small>${entry.mode}</small></td>
-      <td><strong style="color:var(--primary);">${entry.score}/30</strong></td>
+      <td><strong style="color:#4F46E5;">${entry.score}/30</strong></td>
       <td>${entry.time}</td>
-      <td><span style="color:var(--success); font-weight:700;">${entry.accuracy}%</span></td>
+      <td><span style="color:#10B981; font-weight:700;">${entry.accuracy}%</span></td>
     </tr>
   `).join('');
 }
@@ -341,8 +343,7 @@ function escapeHtml(str) {
 }
 
 function resetToStart() {
-  document.getElementById('screen-results').classList.remove('active');
-  document.getElementById('screen-start').classList.add('active');
+  showScreen('screen-start');
   renderLeaderboard();
 }
 
