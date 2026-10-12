@@ -15,8 +15,8 @@
     <p>Aprèn, juga i posa a prova els teus coneixements de geografia!</p>
   </header>
 
-  <!-- PANTALLA INICIAL / REGISTRE -->
-  <div id="screen-start" class="screen active">
+  <!-- PANTALLA 1: INICI I REGISTRE (Visible per defecte) -->
+  <div id="screen-start" class="screen active" style="display: flex;">
     <div class="welcome-card">
       <div class="input-group">
         <label for="student-name">🧑‍🎓 El teu Nom / Usuari:</label>
@@ -27,7 +27,7 @@
         <label>🎯 Selecciona el Mode de Joc:</label>
         <div class="mode-options">
           <button type="button" class="mode-btn selected" id="btn-mode-30" onclick="selectMode('30')">
-            📍 30 Primers<br><small>(Alt Camp - Pla de l'Estany)</small>
+            📍 30 Primers<br><small>(Alt Camp - Priorat)</small>
           </button>
           <button type="button" class="mode-btn" id="btn-mode-all" onclick="selectMode('all')">
             🌍 Totes (+30)<br><small>(Les 42 comarques)</small>
@@ -52,15 +52,15 @@
             </tr>
           </thead>
           <tbody id="leaderboard-body">
-            <tr><td colspan="6" style="color:#94A3B8;">Carregant rànking...</td></tr>
+            <tr><td colspan="6" style="color:#94A3B8;">Sense registres encara. Sigues el primer! 🚀</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- PANTALLA DEL QUIZZ -->
-  <div id="screen-quiz" class="screen">
+  <!-- PANTALLA 2: JOC QUIZZ (Oculta inicialment) -->
+  <div id="screen-quiz" class="screen" style="display: none;">
     <div class="quiz-layout">
       <!-- BARRA D'ESTADÍSTIQUES -->
       <div class="stats-bar">
@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <!-- MAPA INTERACTIU AMB MAPA2.PNG -->
+      <!-- MAPA INTERACTIU SOBRE MAPA2.PNG -->
       <div class="map-container" id="map-container">
         <div class="map-wrapper" id="map-wrapper">
           <img src="mapa2.png" alt="Mapa de Catalunya" id="map-img" onerror="onMapError()">
@@ -83,13 +83,13 @@
         </div>
       </div>
 
-      <!-- CAIXA DE PREGUNTES I RESPOSTA -->
+      <!-- CAIXA DE PREGUNTES -->
       <div class="question-box">
         <div class="question-title" id="question-type-title">Pregunta de geografia</div>
         <div class="question-prompt" id="question-text">Carregant pregunta...</div>
 
         <div id="input-container" class="answer-form">
-          <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta aquí..." autocomplete="off">
+          <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta..." autocomplete="off">
           <button class="submit-btn" onclick="checkAnswer()">Respondre</button>
         </div>
 
@@ -102,15 +102,15 @@
     </div>
   </div>
 
-  <!-- PANTALLA DE RESULTATS -->
-  <div id="screen-results" class="screen">
+  <!-- PANTALLA 3: RESULTATS (Oculta inicialment) -->
+  <div id="screen-results" class="screen" style="display: none;">
     <div class="welcome-card">
       <div class="results-summary">
         <h2>🎉 Felicitats!</h2>
         <p style="font-size: 1.1rem; margin-top: 8px;">Has completat el qüestionari!</p>
-        <div style="margin: 20px 0; font-size: 1.3rem;">
-          <p>Resultat: <strong id="res-score" style="color:var(--primary)">0/30</strong></p>
-          <p>Percentatge d'encerts: <strong id="res-accuracy" style="color:var(--success)">0%</strong></p>
+        <div style="margin: 20px 0; font-size: 1.3rem; line-height: 1.8;">
+          <p>Resultat: <strong id="res-score" style="color:#4F46E5;">0/30</strong></p>
+          <p>Percentatge d'encerts: <strong id="res-accuracy" style="color:#10B981;">0%</strong></p>
           <p>Temps emprat: <strong id="res-time">00:00</strong></p>
         </div>
       </div>
