@@ -1,307 +1,125 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Joc de les Comarques de Catalunya</title>
-
-    <!-- Canvas Confetti & FontAwesome CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Fredoka', 'Quicksand', sans-serif; background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0e7ff 100%); min-height: 100vh; color: #1e293b; padding: 20px; user-select: none; }
-        header { text-align: center; margin-bottom: 20px; }
-        header h1 { font-size: 2.2rem; color: #0369a1; text-shadow: 2px 2px 0px #bae6fd; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        header p { color: #475569; font-size: 1.1rem; margin-top: 5px; }
-
-        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; max-width: 1400px; margin: 0 auto; }
-        @media (max-width: 992px) { .main-layout { grid-template-columns: 1fr; } }
-
-        .map-card { background: #ffffff; border-radius: 20px; padding: 15px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
-        .map-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid #cbd5e1; }
-        .map-wrapper { position: relative; width: 100%; aspect-ratio: 1024 / 780; border-radius: 12px; overflow: hidden; border: 2px solid #bae6fd; background-color: #e0f2fe; display: flex; align-items: center; justify-content: center; }
-        .map-image { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; }
-
-        .comarca-zone { fill: rgba(2, 132, 199, 0.08); stroke: rgba(15, 23, 42, 0.3); stroke-width: 1.5; cursor: pointer; transition: all 0.2s ease-in-out; }
-        .comarca-zone:hover { fill: rgba(56, 189, 248, 0.55) !important; stroke: #0284c7 !important; stroke-width: 3px; filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.7)); }
-        .comarca-zone.correct { fill: rgba(34, 197, 94, 0.65) !important; stroke: #15803d !important; stroke-width: 2.5px; }
-        .comarca-zone.wrong { fill: rgba(239, 68, 68, 0.65) !important; stroke: #b91c1c !important; animation: shake 0.4s ease; }
-        .comarca-zone.active-target { fill: rgba(250, 204, 21, 0.75) !important; stroke: #d97706 !important; stroke-width: 3px; animation: pulseGlow 1.2s infinite alternate; }
-
-        @keyframes pulseGlow { from { fill: rgba(250, 204, 21, 0.5); } to { fill: rgba(250, 204, 21, 0.9); filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9)); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
-
-        .tooltip { position: absolute; background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; pointer-events: none; display: none; z-index: 100; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
-        .sidebar { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-        .game-status { text-align: center; }
-        .question-box { background: #f0f9ff; border: 2px dashed #38bdf8; border-radius: 16px; padding: 15px; margin: 15px 0; }
-        .question-box h3 { font-size: 0.95rem; color: #0284c7; text-transform: uppercase; }
-        .question-target { font-size: 1.6rem; color: #0f172a; font-weight: 700; margin-top: 5px; }
-
-        .input-group { display: flex; gap: 8px; margin-top: 10px; }
-        .input-group input { flex: 1; padding: 10px 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-family: inherit; font-size: 1rem; outline: none; }
-        .btn { background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn:hover { background: #0369a1; transform: translateY(-2px); }
-        .btn-success { background: #22c55e; } .btn-success:hover { background: #16a34a; }
-        .btn-warning { background: #f59e0b; } .btn-warning:hover { background: #d97706; }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
-        .stat-card { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #e2e8f0; }
-        .stat-card .val { font-size: 1.4rem; font-weight: 700; color: #0284c7; }
-        .stat-card .lbl { font-size: 0.8rem; color: #64748b; }
-
-        .mode-selector { display: flex; gap: 8px; margin-bottom: 15px; }
-        .mode-btn { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; border: 2px solid #e2e8f0; background: #ffffff; cursor: pointer; font-family: inherit; font-weight: 600; }
-        .mode-btn.active { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
-        .attribution { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 12px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comarques de Catalunya - Quiz Interactiu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <header>
-        <h1><i class="fa-solid fa-map-location-dot"></i> El Joc de les Comarques</h1>
-        <p>Aprende i practica les comarques i capitals de Catalunya</p>
-    </header>
+<div class="app-container">
+  <header>
+    <h1>🗺️ Comarques de Catalunya</h1>
+    <p>Aprèn, juga i posa a prova els teus coneixements de geografia!</p>
+  </header>
 
-    <div class="main-layout">
-        <div class="map-card">
-            <div class="map-controls">
-                <span id="mapStatusText" style="font-size: 0.85rem; color: #475569;">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Carregant mapa...
-                </span>
-            </div>
+  <!-- PANTALLA INICIAL / REGISTRE -->
+  <div id="screen-start" class="screen active">
+    <div class="welcome-card">
+      <div class="input-group">
+        <label for="student-name">🧑‍🎓 El teu Nom / Usuari:</label>
+        <input type="text" id="student-name" placeholder="Escriu el teu nom..." autocomplete="off">
+      </div>
 
-            <div class="map-wrapper" id="mapWrapper">
-                <img id="mapImage" class="map-image" alt="Mapa Comarcal de Catalunya">
-                <svg id="svgOverlay" class="svg-overlay" viewBox="0 0 1024 780" preserveAspectRatio="none"></svg>
-            </div>
-            <div class="tooltip" id="tooltip"></div>
-            <div class="attribution">
-                Cartografia oficial: <strong>Institut Cartogràfic i Geològic de Catalunya (ICGC)</strong> (CC-BY)[cite: 1].
-            </div>
+      <div class="mode-selection">
+        <label>🎯 Selecciona el Mode de Joc:</label>
+        <div class="mode-options">
+          <button type="button" class="mode-btn selected" id="btn-mode-30" onclick="selectMode('30')">
+            📍 30 Primers<br><small>(Alt Camp - Pla de l'Estany)</small>
+          </button>
+          <button type="button" class="mode-btn" id="btn-mode-all" onclick="selectMode('all')">
+            🌍 Totes (+30)<br><small>(Les 42 comarques)</small>
+          </button>
         </div>
+      </div>
 
-        <div class="sidebar">
-            <div class="card game-status">
-                <div class="mode-selector">
-                    <button class="mode-btn active" onclick="setGameMode('map')" id="modeMapBtn">Ubicar al Mapa</button>
-                    <button class="mode-btn" onclick="setGameMode('capital')" id="modeCapitalBtn">Encertar Capital</button>
-                </div>
+      <button class="start-btn" onclick="startQuiz()">COMENÇAR EL QUIZZ! 🚀</button>
 
-                <div class="question-box">
-                    <h3 id="questionTitle">Pregunta 1/43</h3>
-                    <div class="question-target" id="questionTarget">Carregant...</div>
-                </div>
-
-                <div id="capitalInputContainer" style="display: none;">
-                    <div class="input-group">
-                        <input type="text" id="capitalInput" placeholder="Escriu la capital..." autocomplete="off">
-                        <button class="btn btn-success" onclick="checkCapitalAnswer()">Comprovar</button>
-                    </div>
-                </div>
-
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn btn-warning" onclick="restartGame()"><i class="fa-solid fa-rotate-right"></i> Reiniciar</button>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="val" id="statCorrect">0</div><div class="lbl">Encerts</div></div>
-                    <div class="stat-card"><div class="val" id="statErrors">0</div><div class="lbl">Errors</div></div>
-                    <div class="stat-card"><div class="val" id="statAccuracy">100%</div><div class="lbl">Precisió</div></div>
-                    <div class="stat-card"><div class="val" id="statTime">00:00</div><div class="lbl">Temps</div></div>
-                </div>
-            </div>
-        </div>
+      <!-- TABLA RÀNKING INICIAL -->
+      <div class="ranking-section">
+        <h3>🏆 Millors Resultats</h3>
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Alumne</th>
+              <th>Mode</th>
+              <th>Encerts</th>
+              <th>Temps</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <tr><td colspan="6" style="color:#94A3B8;">Carregant rànking...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <script>
-        function loadWebMap() {
-            const mapImg = document.getElementById('mapImage');
-            const statusText = document.getElementById('mapStatusText');
-            const pathsToTry = ['./arxius/mapa2.png', 'arxius/mapa2.png', './mapa2.png', 'mapa2.png'];
-            let pathIndex = 0;
+  <!-- PANTALLA DEL QUIZZ -->
+  <div id="screen-quiz" class="screen">
+    <div class="quiz-layout">
+      <!-- BARRA D'ESTADÍSTIQUES -->
+      <div class="stats-bar">
+        <div class="stat-badge">
+          <span>❓ Pregunta:</span> <span id="q-counter">1/30</span>
+        </div>
+        <div class="stat-badge">
+          <span>⏱️ Temps:</span> <span id="timer-display">00:00</span>
+        </div>
+        <div class="stat-badge">
+          <span>📊 Encerts:</span> <span id="accuracy-display">0%</span>
+        </div>
+      </div>
 
-            function tryNextPath() {
-                if (pathIndex >= pathsToTry.length) {
-                    statusText.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i> No s'ha trobat la imatge a <code>arxius/mapa2.png</code>. Comprova que sigui un fitxer PNG.`;
-                    mapImg.style.display = 'none';
-                    return;
-                }
-                const currentPath = pathsToTry[pathIndex];
-                statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Carregant: <code>${currentPath}</code>...`;
-                
-                const testImage = new Image();
-                testImage.onload = function() {
-                    mapImg.src = currentPath;
-                    mapImg.style.display = 'block';
-                    statusText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> Mapa carregat (<code>${currentPath}</code>)`;
-                };
-                testImage.onerror = function() { pathIndex++; tryNextPath(); };
-                testImage.src = currentPath + '?v=' + new Date().getTime();
-            }
-            tryNextPath();
-        }
+      <!-- MAPA INTERACTIU EN SVG -->
+      <div class="map-container" id="map-container">
+        <div id="tooltip" class="map-tooltip">Comarca</div>
+        <svg viewBox="0 0 1000 850" class="catalonia-map" id="catalonia-svg">
+          <!-- Es genera dinàmicament des de script.js -->
+        </svg>
+      </div>
 
-        const COMARQUES = [
-            { name: "Alt Camp", capital: "Valls", cx: 350, cy: 495, r: 24 },
-            { name: "Alt Empordà", capital: "Figueres", cx: 660, cy: 187, r: 35 },
-            { name: "Alt Penedès", capital: "Vilafranca del Penedès", cx: 404, cy: 454, r: 20 },
-            { name: "Alt Urgell", capital: "La Seu d'Urgell", cx: 332, cy: 175, r: 32 },
-            { name: "Alta Ribagorça", capital: "El Pont de Suert", cx: 184, cy: 158, r: 20 },
-            { name: "Anoia", capital: "Igualada", cx: 373, cy: 405, r: 28 },
-            { name: "Bages", capital: "Manresa", cx: 435, cy: 339, r: 28 },
-            { name: "Baix Camp", capital: "Reus", cx: 299, cy: 530, r: 26 },
-            { name: "Baix Ebre", capital: "Tortosa", cx: 189, cy: 612, r: 32 },
-            { name: "Baix Empordà", capital: "La Bisbal d'Empordà", cx: 691, cy: 261, r: 26 },
-            { name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", cx: 462, cy: 440, r: 22 },
-            { name: "Baix Penedès", capital: "El Vendrell", cx: 370, cy: 503, r: 18 },
-            { name: "Barcelonès", capital: "Barcelona", cx: 514, cy: 431, r: 16 },
-            { name: "Berguedà", capital: "Berga", cx: 404, cy: 238, r: 30 },
-            { name: "Cerdanya", capital: "Puigcerdà", cx: 411, cy: 156, r: 24 },
-            { name: "Conca de Barberà", capital: "Montblanc", cx: 330, cy: 438, r: 24 },
-            { name: "Garraf", capital: "Vilanova i la Geltrú", cx: 430, cy: 488, r: 16 },
-            { name: "Garrigues", capital: "Les Borges Blanques", cx: 230, cy: 456, r: 26 },
-            { name: "Garrotxa", capital: "Olot", cx: 578, cy: 199, r: 24 },
-            { name: "Gironès", capital: "Girona", cx: 626, cy: 259, r: 22 },
-            { name: "Lluçanès", capital: "Prats de Lluçanès", cx: 471, cy: 257, r: 18 },
-            { name: "Maresme", capital: "Mataró", cx: 583, cy: 394, r: 22 },
-            { name: "Moianès", capital: "Moià", cx: 473, cy: 314, r: 18 },
-            { name: "Montsià", capital: "Amposta", cx: 138, cy: 680, r: 30 },
-            { name: "Noguera", capital: "Balaguer", cx: 240, cy: 331, r: 36 },
-            { name: "Osona", capital: "Vic", cx: 514, cy: 277, r: 30 },
-            { name: "Pallars Jussà", capital: "Tremp", cx: 237, cy: 235, r: 30 },
-            { name: "Pallars Sobirà", capital: "Sort", cx: 261, cy: 126, r: 32 },
-            { name: "Pla de l'Estany", capital: "Banyoles", cx: 596, cy: 222, r: 16 },
-            { name: "Pla d'Urgell", capital: "Mollerussa", cx: 237, cy: 391, r: 16 },
-            { name: "Priorat", capital: "Falset", cx: 258, cy: 511, r: 20 },
-            { name: "Ribera d'Ebre", capital: "Móra d'Ebre", cx: 217, cy: 532, r: 24 },
-            { name: "Ripollès", capital: "Ripoll", cx: 493, cy: 173, r: 28 },
-            { name: "Segarra", capital: "Cervera", cx: 330, cy: 352, r: 22 },
-            { name: "Segrià", capital: "Lleida", cx: 166, cy: 431, r: 34 },
-            { name: "Selva", capital: "Santa Coloma de Farners", cx: 596, cy: 306, r: 28 },
-            { name: "Solsonès", capital: "Solsona", cx: 340, cy: 275, r: 28 },
-            { name: "Tarragonès", capital: "Tarragona", cx: 370, cy: 532, r: 20 },
-            { name: "Terra Alta", capital: "Gandesa", cx: 155, cy: 563, r: 24 },
-            { name: "Urgell", capital: "Tàrrega", cx: 288, cy: 391, r: 22 },
-            { name: "Val d'Aran", capital: "Vielha e Mijaran", cx: 207, cy: 80, r: 24 },
-            { name: "Vallès Occidental", capital: "Sabadell", cx: 483, cy: 391, r: 22 },
-            { name: "Vallès Oriental", capital: "Granollers", cx: 534, cy: 368, r: 26 }
-        ];
+      <!-- CAIXA DE PREGUNTES I RESPOSTA -->
+      <div class="question-box">
+        <div class="question-title" id="question-type-title">Pregunta de geografia</div>
+        <div class="question-prompt" id="question-text">Carregant pregunta...</div>
 
-        let currentMode = 'map', currentQuestions = [], currentIndex = 0, correctCount = 0, errorCount = 0, timerSeconds = 0, timerInterval = null;
+        <div id="input-container" class="answer-form">
+          <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta aquí..." autocomplete="off">
+          <button class="submit-btn" onclick="checkAnswer()">Respondre</button>
+        </div>
 
-        function initSvgOverlay() {
-            const svg = document.getElementById('svgOverlay');
-            svg.innerHTML = '';
-            COMARQUES.forEach((c, idx) => {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", c.cx);
-                circle.setAttribute("cy", c.cy);
-                circle.setAttribute("r", c.r);
-                circle.setAttribute("class", "comarca-zone");
-                circle.setAttribute("data-index", idx);
+        <div id="map-instruction" style="display:none; font-weight:700; color:#0284C7; text-align:center;">
+          👇 Fes clic directament sobre la comarca al mapa!
+        </div>
 
-                const tooltip = document.getElementById('tooltip');
-                circle.addEventListener('mouseenter', (e) => {
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${c.name}</strong><br>Capital: ${c.capital}`;
-                    tooltip.style.left = (e.pageX + 12) + 'px';
-                    tooltip.style.top = (e.pageY - 30) + 'px';
-                });
-                circle.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-                circle.addEventListener('click', () => onComarcaClick(idx));
-                svg.appendChild(circle);
-            });
-        }
+        <div id="feedback-box" class="feedback-message"></div>
+      </div>
+    </div>
+  </div>
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            if (type === 'correct') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
+  <!-- PANTALLA DE RESULTATS -->
+  <div id="screen-results" class="screen">
+    <div class="welcome-card">
+      <div class="results-summary">
+        <h2>🎉 Felicitats!</h2>
+        <p style="font-size: 1.1rem; margin-top: 8px;">Has completat el qüestionari!</p>
+        <div style="margin: 20px 0; font-size: 1.3rem;">
+          <p>Resultat: <strong id="res-score" style="color:var(--primary)">0/30</strong></p>
+          <p>Percentatge d'encerts: <strong id="res-accuracy" style="color:var(--success)">0%</strong></p>
+          <p>Temps emprat: <strong id="res-time">00:00</strong></p>
+        </div>
+      </div>
 
-        function normalizeText(str) { return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[''’\-]/g, " ").replace(/\s+/g, " ").trim(); }
-        function setGameMode(mode) { currentMode = mode; document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map'); document.getElementById('modeCapitalBtn').classList.toggle('active', mode === 'capital'); document.getElementById('capitalInputContainer').style.display = mode === 'capital' ? 'block' : 'none'; restartGame(); }
+      <button class="start-btn" onclick="resetToStart()">TORNAR A JUGAR 🔄</button>
+    </div>
+  </div>
+</div>
 
-        function restartGame() {
-            currentQuestions = [...COMARQUES].sort(() => Math.random() - 0.5);
-            currentIndex = 0; correctCount = 0; errorCount = 0; timerSeconds = 0;
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timerSeconds++;
-                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-                const secs = String(timerSeconds % 60).padStart(2, '0');
-                document.getElementById('statTime').innerText = `${mins}:${secs}`;
-            }, 1000);
-            document.querySelectorAll('.comarca-zone').forEach(reg => reg.className.baseVal = 'comarca-zone');
-            updateStats(); showCurrentQuestion();
-        }
-
-        function showCurrentQuestion() {
-            if (currentIndex >= currentQuestions.length) { endGame(); return; }
-            const current = currentQuestions[currentIndex];
-            document.getElementById('questionTitle').innerText = `Pregunta ${currentIndex + 1} de ${currentQuestions.length}`;
-            document.getElementById('questionTarget').innerText = current.name;
-            document.querySelectorAll('.comarca-zone').forEach(p => p.classList.remove('active-target'));
-            if (currentMode === 'capital') {
-                const comarcaIdx = COMARQUES.findIndex(c => c.name === current.name);
-                const region = document.querySelector(`.comarca-zone[data-index="${comarcaIdx}"]`);
-                if (region) region.classList.add('active-target');
-                document.getElementById('capitalInput').value = '';
-                document.getElementById('capitalInput').focus();
-            }
-        }
-
-        function onComarcaClick(idx) {
-            if (currentMode !== 'map') return;
-            const target = currentQuestions[currentIndex], clicked = COMARQUES[idx];
-            const region = document.querySelector(`.comarca-zone[data-index="${idx}"]`);
-            if (clicked.name === target.name) {
-                playSound('correct'); region.classList.add('correct'); correctCount++; currentIndex++; updateStats(); showCurrentQuestion();
-            } else {
-                playSound('wrong'); region.classList.add('wrong'); setTimeout(() => region.classList.remove('wrong'), 500); errorCount++; updateStats();
-            }
-        }
-
-        function checkCapitalAnswer() {
-            if (currentMode !== 'capital') return;
-            const inputVal = document.getElementById('capitalInput').value, target = currentQuestions[currentIndex];
-            if (normalizeText(inputVal) === normalizeText(target.capital)) {
-                playSound('correct'); correctCount++; currentIndex++; updateStats(); showCurrentQuestion();
-            } else {
-                playSound('wrong'); errorCount++; updateStats();
-                const inputEl = document.getElementById('capitalInput'); inputEl.style.borderColor = '#ef4444'; setTimeout(() => inputEl.style.borderColor = '#cbd5e1', 600);
-            }
-        }
-
-        document.getElementById('capitalInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkCapitalAnswer(); });
-        function updateStats() { document.getElementById('statCorrect').innerText = correctCount; document.getElementById('statErrors').innerText = errorCount; const total = correctCount + errorCount; document.getElementById('statAccuracy').innerText = (total > 0 ? Math.round((correctCount / total) * 100) : 100) + '%'; }
-        function endGame() { clearInterval(timerInterval); playSound('correct'); confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } }); alert(`🎉 Felicitats! Has completat les 43 comarques.\nPrecisió: ${document.getElementById('statAccuracy').innerText}\nTemps: ${document.getElementById('statTime').innerText}`); }
-
-        window.addEventListener('DOMContentLoaded', () => { loadWebMap(); initSvgOverlay(); restartGame(); });
-    </script>
+<script src="script.js"></script>
 </body>
 </html>
