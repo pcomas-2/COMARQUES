@@ -35,74 +35,93 @@
         .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; max-width: 1400px; margin: 0 auto; }
         @media (max-width: 992px) { .main-layout { grid-template-columns: 1fr; } }
 
-        .map-card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
-        
+        .map-card { background: #ffffff; border-radius: 20px; padding: 15px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
+
+        /* Contenidor del mapa amb la proporció exacta de la imatge comarcal de l'ICGC */
         .map-wrapper { 
             position: relative; 
             width: 100%; 
             aspect-ratio: 1024 / 780;
-            border-radius: 16px; 
+            border-radius: 12px; 
             overflow: hidden; 
             border: 2px solid #bae6fd; 
-            background: #e0f2fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: #e0f2fe;
         }
 
-        /* Mapa SVG integrat */
-        .svg-map {
+        .map-image { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;
+            display: block; 
+        }
+
+        /* Capa SVG interactiva superposada */
+        .svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: #f8fafc;
+            pointer-events: auto;
         }
 
-        .comarca-path {
-            fill: #ffffff;
-            stroke: #334155;
-            stroke-width: 1.8;
+        /* Regions de les comarques (sense punts ni pins) */
+        .comarca-zone {
+            fill: rgba(2, 132, 199, 0.08);
+            stroke: rgba(15, 23, 42, 0.3);
+            stroke-width: 1.5;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
         }
 
-        .comarca-path:hover {
-            fill: #38bdf8 !important;
+        /* Il·luminació al passar el cursor */
+        .comarca-zone:hover {
+            fill: rgba(56, 189, 248, 0.55) !important;
             stroke: #0284c7 !important;
-            stroke-width: 3;
-            filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.6));
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.7));
         }
 
-        .comarca-path.correct {
-            fill: #22c55e !important;
+        /* Resposta correcta (Verd) */
+        .comarca-zone.correct {
+            fill: rgba(34, 197, 94, 0.65) !important;
             stroke: #15803d !important;
+            stroke-width: 2.5px;
         }
 
-        .comarca-path.wrong {
-            fill: #ef4444 !important;
+        /* Resposta equivocada (Vermell) */
+        .comarca-zone.wrong {
+            fill: rgba(239, 68, 68, 0.65) !important;
             stroke: #b91c1c !important;
             animation: shake 0.4s ease;
         }
 
-        .comarca-path.active-target {
-            fill: #facc15 !important;
+        /* Comarca objectiu activa (Groc) */
+        .comarca-zone.active-target {
+            fill: rgba(250, 204, 21, 0.75) !important;
             stroke: #d97706 !important;
+            stroke-width: 3px;
             animation: pulseGlow 1.2s infinite alternate;
         }
 
         @keyframes pulseGlow {
-            from { fill: #fde047; }
-            to { fill: #eab308; filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.8)); }
+            from { fill: rgba(250, 204, 21, 0.5); }
+            to { fill: rgba(250, 204, 21, 0.9); filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9)); }
         }
 
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+        @keyframes shake { 
+            0%, 100% { transform: translateX(0); } 
+            20%, 60% { transform: translateX(-3px); } 
+            40%, 80% { transform: translateX(3px); } 
+        }
 
         .tooltip { 
             position: absolute; 
             background: #0f172a; 
             color: white; 
-            padding: 8px 14px; 
+            padding: 6px 12px; 
             border-radius: 8px; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             pointer-events: none; 
             display: none; 
             z-index: 100; 
@@ -131,306 +150,4 @@
         .stat-card .lbl { font-size: 0.8rem; color: #64748b; }
 
         .mode-selector { display: flex; gap: 8px; margin-bottom: 15px; }
-        .mode-btn { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; border: 2px solid #e2e8f0; background: #ffffff; cursor: pointer; font-family: inherit; font-weight: 600; }
-        .mode-btn.active { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
-
-        .attribution { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 12px; }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1><i class="fa-solid fa-map-location-dot"></i> El Joc de les Comarques</h1>
-        <p>Aprende i practica les comarques i capitals de Catalunya</p>
-    </header>
-
-    <div class="main-layout">
-        <div class="map-card">
-            <div class="map-wrapper" id="mapWrapper">
-                <!-- Mapa SVG vectorial autònom integrat -->
-                <svg id="svgMap" class="svg-map" viewBox="0 0 1024 780" preserveAspectRatio="xMidYMid meet"></svg>
-            </div>
-            <div class="tooltip" id="tooltip"></div>
-            <div class="attribution">
-                Cartografia oficial: <strong>Institut Cartogràfic i Geològic de Catalunya (ICGC)</strong> (CC-BY).
-            </div>
-        </div>
-
-        <div class="sidebar">
-            <div class="card game-status">
-                <div class="mode-selector">
-                    <button class="mode-btn active" onclick="setGameMode('map')" id="modeMapBtn">Ubicar al Mapa</button>
-                    <button class="mode-btn" onclick="setGameMode('capital')" id="modeCapitalBtn">Encertar Capital</button>
-                </div>
-
-                <div class="question-box">
-                    <h3 id="questionTitle">Pregunta 1/43</h3>
-                    <div class="question-target" id="questionTarget">Carregant...</div>
-                </div>
-
-                <div id="capitalInputContainer" style="display: none;">
-                    <div class="input-group">
-                        <input type="text" id="capitalInput" placeholder="Escriu la capital..." autocomplete="off">
-                        <button class="btn btn-success" onclick="checkCapitalAnswer()">Comprovar</button>
-                    </div>
-                </div>
-
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn btn-warning" onclick="restartGame()"><i class="fa-solid fa-rotate-right"></i> Reiniciar</button>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="val" id="statCorrect">0</div>
-                        <div class="lbl">Encerts</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="val" id="statErrors">0</div>
-                        <div class="lbl">Errors</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="val" id="statAccuracy">100%</div>
-                        <div class="lbl">Precisió</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="val" id="statTime">00:00</div>
-                        <div class="lbl">Temps</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Dades oficials de les 43 comarques amb regions vectorials SVG
-        const COMARQUES = [
-            { name: "Alt Camp", capital: "Valls", cx: 350, cy: 495, path: "M320,470 L380,470 L390,520 L330,525 Z" },
-            { name: "Alt Empordà", capital: "Figueres", cx: 660, cy: 187, path: "M610,150 L710,150 L720,225 L620,225 Z" },
-            { name: "Alt Penedès", capital: "Vilafranca del Penedès", cx: 404, cy: 454, path: "M380,435 L430,435 L435,475 L385,475 Z" },
-            { name: "Alt Urgell", capital: "La Seu d'Urgell", cx: 332, cy: 175, path: "M295,135 L370,135 L370,215 L295,215 Z" },
-            { name: "Alta Ribagorça", capital: "El Pont de Suert", cx: 184, cy: 158, path: "M160,130 L210,130 L210,185 L160,185 Z" },
-            { name: "Anoia", capital: "Igualada", cx: 373, cy: 405, path: "M340,370 L405,370 L410,440 L345,440 Z" },
-            { name: "Bages", capital: "Manresa", cx: 435, cy: 339, path: "M400,305 L470,305 L470,370 L400,370 Z" },
-            { name: "Baix Camp", capital: "Reus", cx: 299, cy: 530, path: "M270,500 L330,500 L330,560 L270,560 Z" },
-            { name: "Baix Ebre", capital: "Tortosa", cx: 189, cy: 612, path: "M150,575 L230,575 L230,650 L150,650 Z" },
-            { name: "Baix Empordà", capital: "La Bisbal d'Empordà", cx: 691, cy: 261, path: "M655,230 L730,230 L730,295 L655,295 Z" },
-            { name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", cx: 462, cy: 440, path: "M440,415 L485,415 L485,465 L440,465 Z" },
-            { name: "Baix Penedès", capital: "El Vendrell", cx: 370, cy: 503, path: "M350,485 L390,485 L390,520 L350,520 Z" },
-            { name: "Barcelonès", capital: "Barcelona", cx: 514, cy: 431, path: "M495,415 L535,415 L535,448 L495,448 Z" },
-            { name: "Berguedà", capital: "Berga", cx: 404, cy: 238, path: "M370,200 L440,200 L440,275 L370,275 Z" },
-            { name: "Cerdanya", capital: "Puigcerdà", cx: 411, cy: 156, path: "M375,130 L445,130 L445,180 L375,180 Z" },
-            { name: "Conca de Barberà", capital: "Montblanc", cx: 330, cy: 438, path: "M300,410 L360,410 L360,465 L300,465 Z" },
-            { name: "Garraf", capital: "Vilanova i la Geltrú", cx: 430, cy: 488, path: "M410,470 L450,470 L450,505 L410,505 Z" },
-            { name: "Garrigues", capital: "Les Borges Blanques", cx: 230, cy: 456, path: "M195,425 L265,425 L265,485 L195,485 Z" },
-            { name: "Garrotxa", capital: "Olot", cx: 578, cy: 199, path: "M545,170 L610,170 L610,230 L545,230 Z" },
-            { name: "Gironès", capital: "Girona", cx: 626, cy: 259, path: "M595,235 L660,235 L660,285 L595,285 Z" },
-            { name: "Lluçanès", capital: "Prats de Lluçanès", cx: 471, cy: 257, path: "M450,235 L490,235 L490,280 L450,280 Z" },
-            { name: "Maresme", capital: "Mataró", cx: 583, cy: 394, path: "M550,370 L615,370 L615,418 L550,418 Z" },
-            { name: "Moianès", capital: "Moià", cx: 473, cy: 314, path: "M450,295 L495,295 L495,335 L450,335 Z" },
-            { name: "Montsià", capital: "Amposta", cx: 138, cy: 680, path: "M100,640 L180,640 L180,720 L100,720 Z" },
-            { name: "Noguera", capital: "Balaguer", cx: 240, cy: 331, path: "M195,285 L285,285 L285,375 L195,375 Z" },
-            { name: "Osona", capital: "Vic", cx: 514, cy: 277, path: "M480,240 L550,240 L550,315 L480,315 Z" },
-            { name: "Pallars Jussà", capital: "Tremp", cx: 237, cy: 235, path: "M195,195 L280,195 L280,275 L195,275 Z" },
-            { name: "Pallars Sobirà", capital: "Sort", cx: 261, cy: 126, path: "M220,80 L300,80 L300,170 L220,170 Z" },
-            { name: "Pla de l'Estany", capital: "Banyoles", cx: 596, cy: 222, path: "M575,205 L620,205 L620,240 L575,240 Z" },
-            { name: "Pla d'Urgell", capital: "Mollerussa", cx: 237, cy: 391, path: "M215,370 L260,370 L260,410 L215,410 Z" },
-            { name: "Priorat", capital: "Falset", cx: 258, cy: 511, path: "M235,488 L280,488 L280,535 L235,535 Z" },
-            { name: "Ribera d'Ebre", capital: "Móra d'Ebre", cx: 217, cy: 532, path: "M185,505 L245,505 L245,560 L185,560 Z" },
-            { name: "Ripollès", capital: "Ripoll", cx: 493, cy: 173, path: "M450,135 L535,135 L535,210 L450,210 Z" },
-            { name: "Segarra", capital: "Cervera", cx: 330, cy: 352, path: "M300,325 L360,325 L360,380 L300,380 Z" },
-            { name: "Segrià", capital: "Lleida", cx: 166, cy: 431, path: "M125,380 L205,380 L205,480 L125,480 Z" },
-            { name: "Selva", capital: "Santa Coloma de Farners", cx: 596, cy: 306, path: "M555,270 L635,270 L635,345 L555,345 Z" },
-            { name: "Solsonès", capital: "Solsona", cx: 340, cy: 275, path: "M300,235 L380,235 L380,315 L300,315 Z" },
-            { name: "Tarragonès", capital: "Tarragona", cx: 370, cy: 532, path: "M345,510 L395,510 L395,555 L345,555 Z" },
-            { name: "Terra Alta", capital: "Gandesa", cx: 155, cy: 563, path: "M125,535 L185,535 L185,590 L125,590 Z" },
-            { name: "Urgell", capital: "Tàrrega", cx: 288, cy: 391, path: "M260,365 L315,365 L315,418 L260,418 Z" },
-            { name: "Val d'Aran", capital: "Vielha e Mijaran", cx: 207, cy: 80, path: "M175,45 L240,45 L240,115 L175,115 Z" },
-            { name: "Vallès Occidental", capital: "Sabadell", cx: 483, cy: 391, path: "M455,368 L510,368 L510,415 L455,415 Z" },
-            { name: "Vallès Oriental", capital: "Granollers", cx: 534, cy: 368, path: "M500,342 L568,342 L568,395 L500,395 Z" }
-        ];
-
-        let currentMode = 'map';
-        let currentQuestions = [];
-        let currentIndex = 0;
-        let correctCount = 0;
-        let errorCount = 0;
-        let timerSeconds = 0;
-        let timerInterval = null;
-
-        // Renderitza el mapa SVG
-        function renderSvgMap() {
-            const svg = document.getElementById('svgMap');
-            svg.innerHTML = '';
-
-            COMARQUES.forEach((c, idx) => {
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", c.path);
-                path.setAttribute("class", "comarca-path");
-                path.setAttribute("data-index", idx);
-
-                const tooltip = document.getElementById('tooltip');
-                path.addEventListener('mouseenter', (e) => {
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${c.name}</strong><br>Capital: ${c.capital}`;
-                    tooltip.style.left = (e.pageX + 12) + 'px';
-                    tooltip.style.top = (e.pageY - 30) + 'px';
-                });
-
-                path.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-                path.addEventListener('click', () => onComarcaClick(idx));
-
-                svg.appendChild(path);
-            });
-        }
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'correct') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
-
-        function normalizeText(str) {
-            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[''’\-]/g, " ").replace(/\s+/g, " ").trim();
-        }
-
-        function setGameMode(mode) {
-            currentMode = mode;
-            document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
-            document.getElementById('modeCapitalBtn').classList.toggle('active', mode === 'capital');
-            document.getElementById('capitalInputContainer').style.display = mode === 'capital' ? 'block' : 'none';
-            restartGame();
-        }
-
-        function restartGame() {
-            currentQuestions = [...COMARQUES].sort(() => Math.random() - 0.5);
-            currentIndex = 0;
-            correctCount = 0;
-            errorCount = 0;
-            timerSeconds = 0;
-
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timerSeconds++;
-                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-                const secs = String(timerSeconds % 60).padStart(2, '0');
-                document.getElementById('statTime').innerText = `${mins}:${secs}`;
-            }, 1000);
-
-            document.querySelectorAll('.comarca-path').forEach(p => p.className.baseVal = 'comarca-path');
-            updateStats();
-            showCurrentQuestion();
-        }
-
-        function showCurrentQuestion() {
-            if (currentIndex >= currentQuestions.length) {
-                endGame();
-                return;
-            }
-
-            const current = currentQuestions[currentIndex];
-            document.getElementById('questionTitle').innerText = `Pregunta ${currentIndex + 1} de ${currentQuestions.length}`;
-            document.getElementById('questionTarget').innerText = current.name;
-
-            document.querySelectorAll('.comarca-path').forEach(p => p.classList.remove('active-target'));
-
-            if (currentMode === 'capital') {
-                const comarcaIdx = COMARQUES.findIndex(c => c.name === current.name);
-                const region = document.querySelector(`.comarca-path[data-index="${comarcaIdx}"]`);
-                if (region) region.classList.add('active-target');
-                document.getElementById('capitalInput').value = '';
-                document.getElementById('capitalInput').focus();
-            }
-        }
-
-        function onComarcaClick(idx) {
-            if (currentMode !== 'map') return;
-
-            const target = currentQuestions[currentIndex];
-            const clicked = COMARQUES[idx];
-            const region = document.querySelector(`.comarca-path[data-index="${idx}"]`);
-
-            if (clicked.name === target.name) {
-                playSound('correct');
-                region.classList.add('correct');
-                correctCount++;
-                currentIndex++;
-                updateStats();
-                showCurrentQuestion();
-            } else {
-                playSound('wrong');
-                region.classList.add('wrong');
-                setTimeout(() => region.classList.remove('wrong'), 500);
-                errorCount++;
-                updateStats();
-            }
-        }
-
-        function checkCapitalAnswer() {
-            if (currentMode !== 'capital') return;
-
-            const inputVal = document.getElementById('capitalInput').value;
-            const target = currentQuestions[currentIndex];
-
-            if (normalizeText(inputVal) === normalizeText(target.capital)) {
-                playSound('correct');
-                correctCount++;
-                currentIndex++;
-                updateStats();
-                showCurrentQuestion();
-            } else {
-                playSound('wrong');
-                errorCount++;
-                updateStats();
-                const inputEl = document.getElementById('capitalInput');
-                inputEl.style.borderColor = '#ef4444';
-                setTimeout(() => inputEl.style.borderColor = '#cbd5e1', 600);
-            }
-        }
-
-        document.getElementById('capitalInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkCapitalAnswer();
-        });
-
-        function updateStats() {
-            document.getElementById('statCorrect').innerText = correctCount;
-            document.getElementById('statErrors').innerText = errorCount;
-            const total = correctCount + errorCount;
-            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 100;
-            document.getElementById('statAccuracy').innerText = accuracy + '%';
-        }
-
-        function endGame() {
-            clearInterval(timerInterval);
-            playSound('correct');
-            confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-            alert(`🎉 Felicitats! Has completat les 43 comarques.\nPrecisió: ${document.getElementById('statAccuracy').innerText}\nTemps: ${document.getElementById('statTime').innerText}`);
-        }
-
-        window.addEventListener('load', () => {
-            renderSvgMap();
-            restartGame();
-        });
-    </script>
-</body>
-</html>
+        .mode-btn { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; border: 2px solid #e2e8f0; background
