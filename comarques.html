@@ -36,23 +36,51 @@
         @media (max-width: 992px) { .main-layout { grid-template-columns: 1fr; } }
 
         .map-card { background: #ffffff; border-radius: 20px; padding: 15px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
-        .map-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #f8fafc; padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        
+        .map-controls { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+            background: #f8fafc; 
+            padding: 8px 14px; 
+            border-radius: 10px; 
+            border: 1px solid #e2e8f0; 
+        }
 
-        .file-upload-btn { font-size: 0.85rem; background: #0284c7; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .file-upload-btn { 
+            font-size: 0.85rem; 
+            background: #0284c7; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-weight: 600; 
+        }
         .file-upload-btn:hover { background: #0369a1; }
 
+        /* Contenidor del mapa amb proporció d'aspecte exacta de la imatge ICGC (1024x780) */
         .map-wrapper { 
             position: relative; 
             width: 100%; 
+            aspect-ratio: 1024 / 780;
             border-radius: 12px; 
             overflow: hidden; 
             border: 2px solid #bae6fd; 
             background-color: #e0f2fe;
         }
 
-        .map-image { width: 100%; height: auto; display: block; }
+        .map-image { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;
+            display: block; 
+        }
 
-        /* Capa SVG d'il·luminació de comarques */
+        /* Capa SVG interactiva per il·luminar regions */
         .svg-overlay {
             position: absolute;
             top: 0;
@@ -62,53 +90,69 @@
             pointer-events: auto;
         }
 
-        /* Estil de les regions comarcals */
-        .comarca-region {
-            fill: rgba(2, 132, 199, 0.05); /* Fons semitransparent per detectar clics */
-            stroke: rgba(15, 23, 42, 0.25);
+        /* Estil de les comarques (Sense pins de capitals) */
+        .comarca-zone {
+            fill: rgba(2, 132, 199, 0.08);
+            stroke: rgba(15, 23, 42, 0.3);
             stroke-width: 1.5;
             cursor: pointer;
-            transition: all 0.25s ease-in-out;
+            transition: all 0.2s ease-in-out;
         }
 
-        /* Efecte d'il·luminació quan es passa el ratolí */
-        .comarca-region:hover {
-            fill: rgba(56, 189, 248, 0.5) !important;
+        /* Il·luminació al passar el ratolí */
+        .comarca-zone:hover {
+            fill: rgba(56, 189, 248, 0.55) !important;
             stroke: #0284c7 !important;
             stroke-width: 3px;
-            filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.8));
+            filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.7));
         }
 
-        /* Comarca encertada (verd) */
-        .comarca-region.correct {
-            fill: rgba(34, 197, 94, 0.6) !important;
+        /* Encert (Verd) */
+        .comarca-zone.correct {
+            fill: rgba(34, 197, 94, 0.65) !important;
             stroke: #15803d !important;
             stroke-width: 2.5px;
         }
 
-        /* Comarca equivocada (vermell) */
-        .comarca-region.wrong {
-            fill: rgba(239, 68, 68, 0.6) !important;
+        /* Error (Vermell) */
+        .comarca-zone.wrong {
+            fill: rgba(239, 68, 68, 0.65) !important;
             stroke: #b91c1c !important;
             animation: shake 0.4s ease;
         }
 
-        /* Comarca d'objectiu actiu / pregunta (groc fluorescent) */
-        .comarca-region.active-target {
-            fill: rgba(250, 204, 21, 0.65) !important;
+        /* Objectiu actiu (Groc d'atenció) */
+        .comarca-zone.active-target {
+            fill: rgba(250, 204, 21, 0.7) !important;
             stroke: #d97706 !important;
             stroke-width: 3px;
-            animation: pulseGlowRegion 1.2s infinite alternate;
+            animation: pulseGlow 1.2s infinite alternate;
         }
 
-        @keyframes pulseGlowRegion {
-            from { fill: rgba(250, 204, 21, 0.45); }
-            to { fill: rgba(250, 204, 21, 0.85); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
+        @keyframes pulseGlow {
+            from { fill: rgba(250, 204, 21, 0.5); }
+            to { fill: rgba(250, 204, 21, 0.9); filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9)); }
         }
 
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+        @keyframes shake { 
+            0%, 100% { transform: translateX(0); } 
+            20%, 60% { transform: translateX(-3px); } 
+            40%, 80% { transform: translateX(3px); } 
+        }
 
-        .tooltip { position: absolute; background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; pointer-events: none; display: none; z-index: 100; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .tooltip { 
+            position: absolute; 
+            background: #0f172a; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            font-size: 0.85rem; 
+            pointer-events: none; 
+            display: none; 
+            z-index: 100; 
+            white-space: nowrap; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25); 
+        }
 
         .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
@@ -157,10 +201,10 @@
             </div>
 
             <div class="map-wrapper" id="mapWrapper">
-                <!-- Imatge del mapa de l'ICGC -->
+                <!-- Imatge del mapa fons de l'ICGC (1024x780) -->
                 <img id="mapImage" class="map-image" alt="Mapa Comarcal de Catalunya">
-                <!-- Capa SVG superposada per il·luminar les comarques -->
-                <svg id="svgOverlay" class="svg-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none"></svg>
+                <!-- Capa SVG superposada per il·luminar la comarca sencera al fer-hi clic/hover -->
+                <svg id="svgOverlay" class="svg-overlay" viewBox="0 0 1024 780" preserveAspectRatio="none"></svg>
             </div>
             <div class="tooltip" id="tooltip"></div>
             <div class="attribution">
@@ -214,4 +258,4 @@
     </div>
 
     <script>
-        // Coordenades poligonals aproximades per il·luminar
+        // Coordenades del mapa de l'ICGC (1024 x 780 px
