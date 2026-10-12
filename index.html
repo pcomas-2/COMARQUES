@@ -66,12 +66,29 @@
       margin-top: 4px;
     }
 
+    .version-badge {
+      background: #D1FAE5;
+      color: #065F46;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
     /* PANTALLES: S'AMAGUEN PER DEFECTE */
     .screen {
-      display: none;
+      display: none !important;
       padding: 30px;
       width: 100%;
       box-sizing: border-box;
+    }
+
+    .screen.active {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
     }
 
     /* PANTALLA INICIAL */
@@ -351,8 +368,10 @@
   </header>
 
   <!-- PANTALLA 1: INICI I REGISTRE -->
-  <div id="screen-start" class="screen" style="display: flex; flex-direction: column; align-items: center;">
+  <div id="screen-start" class="screen active">
     <div class="welcome-card">
+      <div class="version-badge">✅ VERSIÓ SENSE MAPA 2.0</div>
+      
       <div class="input-group">
         <label for="student-name">🧑‍🎓 El teu Nom / Usuari:</label>
         <input type="text" id="student-name" placeholder="Escriu el teu nom..." autocomplete="off">
@@ -370,7 +389,7 @@
         </div>
       </div>
 
-      <button type="button" class="start-btn" onclick="startQuiz()">COMENÇAR EL QUIZZ! 🚀</button>
+      <button type="button" id="btn-start-game" class="start-btn" onclick="startQuiz()">COMENÇAR EL QUIZZ! 🚀</button>
 
       <!-- TABLA RÀNKING -->
       <div class="ranking-section">
@@ -395,6 +414,380 @@
   </div>
 
   <!-- PANTALLA 2: JOC QUIZZ -->
-  <div id="screen-quiz" class="screen" style="display: none;">
+  <div id="screen-quiz" class="screen">
     <div class="quiz-container">
-      <!-- BAR
+      <!-- BARRA D'ESTADÍSTIQUES -->
+      <div class="stats-bar">
+        <div class="stat-badge">
+          <span>❓ Pregunta:</span> <span id="q-counter">1/30</span>
+        </div>
+        <div class="stat-badge">
+          <span>⏱️ Temps:</span> <span id="timer-display">00:00</span>
+        </div>
+        <div class="stat-badge">
+          <span>📊 Encerts:</span> <span id="accuracy-display">0%</span>
+        </div>
+      </div>
+
+      <!-- TARGETA DE PREGUNTA -->
+      <div class="question-card">
+        <div class="question-tag" id="question-tag">Capital de Comarca</div>
+        <div class="question-text" id="question-text">Carregant pregunta...</div>
+
+        <div class="answer-form">
+          <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta..." autocomplete="off">
+          <button type="button" class="submit-btn" onclick="checkAnswer()">Respondre</button>
+        </div>
+
+        <div id="feedback-box" class="feedback-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 3: RESULTATS -->
+  <div id="screen-results" class="screen">
+    <div class="welcome-card">
+      <div class="results-summary">
+        <h2>🎉 Felicitats!</h2>
+        <p style="font-size: 1.15rem; margin-top: 8px;">Has completat el qüestionari!</p>
+        <div style="margin: 25px 0; font-size: 1.3rem; line-height: 1.8;">
+          <p>Resultat: <strong id="res-score" style="color:#4F46E5;">0/30</strong></p>
+          <p>Percentatge d'encerts: <strong id="res-accuracy" style="color:#10B981;">0%</strong></p>
+          <p>Temps emprat: <strong id="res-time">00:00</strong></p>
+        </div>
+      </div>
+
+      <button type="button" class="start-btn" onclick="resetToStart()">TORNAR A JUGAR 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // DADES DE LES 42 COMARQUES I CAPITALS EN ORDRE ALFABÈTIC
+  const comarquesData = [
+    { name: "Alt Camp", capital: "Valls", alts: ["valls"] },
+    { name: "Alt Empordà", capital: "Figueres", alts: ["figueres"] },
+    { name: "Alt Penedès", capital: "Vilafranca del Penedès", alts: ["vilafranca del penedes", "vilafranca"] },
+    { name: "Alt Urgell", capital: "La Seu d'Urgell", alts: ["la seu d'urgell", "seu d'urgell", "seu d urgell", "la seu", "seu"] },
+    { name: "Alta Ribagorça", capital: "El Pont de Suert", alts: ["el pont de suert", "pont de suert"] },
+    { name: "Anoia", capital: "Igualada", alts: ["igualada"] },
+    { name: "Bages", capital: "Manresa", alts: ["manresa"] },
+    { name: "Baix Camp", capital: "Reus", alts: ["reus"] },
+    { name: "Baix Ebre", capital: "Tortosa", alts: ["tortosa"] },
+    { name: "Baix Empordà", capital: "La Bisbal d'Empordà", alts: ["la bisbal d'emporda", "bisbal", "la bisbal"] },
+    { name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", alts: ["sant feliu de llobregat", "sant feliu"] },
+    { name: "Baix Penedès", capital: "El Vendrell", alts: ["el vendrell", "vendrell"] },
+    { name: "Barcelonès", capital: "Barcelona", alts: ["barcelona"] },
+    { name: "Berguedà", capital: "Berga", alts: ["berga"] },
+    { name: "Cerdanya", capital: "Puigcerdà", alts: ["puigcerda"] },
+    { name: "Conca de Barberà", capital: "Montblanc", alts: ["montblanc"] },
+    { name: "Garraf", capital: "Vilanova i la Geltrú", alts: ["vilanova i la geltru", "vilanova"] },
+    { name: "Garrigues", capital: "Les Borges Blanques", alts: ["les borges blanques", "borges blanques"] },
+    { name: "Garrotxa", capital: "Olot", alts: ["olot"] },
+    { name: "Gironès", capital: "Girona", alts: ["girona"] },
+    { name: "Maresme", capital: "Mataró", alts: ["mataro"] },
+    { name: "Moianès", capital: "Moià", alts: ["moia"] },
+    { name: "Montsià", capital: "Amposta", alts: ["amposta"] },
+    { name: "Noguera", capital: "Balaguer", alts: ["balaguer"] },
+    { name: "Osona", capital: "Vic", alts: ["vic"] },
+    { name: "Pallars Jussà", capital: "Tremp", alts: ["tremp"] },
+    { name: "Pallars Sobirà", capital: "Sort", alts: ["sort"] },
+    { name: "Pla d'Urgell", capital: "Mollerussa", alts: ["mollerussa"] },
+    { name: "Pla de l'Estany", capital: "Banyoles", alts: ["banyoles"] },
+    { name: "Priorat", capital: "Falset", alts: ["falset"] },
+    { name: "Ribera d'Ebre", capital: "Móra d'Ebre", alts: ["mora d'ebre", "mora d ebre", "mora"] },
+    { name: "Ripollès", capital: "Ripoll", alts: ["ripoll"] },
+    { name: "Segarra", capital: "Cervera", alts: ["cervera"] },
+    { name: "Segrià", capital: "Lleida", alts: ["lleida"] },
+    { name: "Selva", capital: "Santa Coloma de Farners", alts: ["santa coloma de farners", "santa coloma"] },
+    { name: "Solsonès", capital: "Solsona", alts: ["solsona"] },
+    { name: "Tarragonès", capital: "Tarragona", alts: ["tarragona"] },
+    { name: "Terra Alta", capital: "Gandesa", alts: ["gandesa"] },
+    { name: "Urgell", capital: "Tàrrega", alts: ["tarrega"] },
+    { name: "Val d'Aran", capital: "Vielha e Mijaran", alts: ["vielha e mijaran", "vielha"] },
+    { name: "Vallès Occidental", capital: "Sabadell", alts: ["sabadell", "terrassa"] },
+    { name: "Vallès Oriental", capital: "Granollers", alts: ["granollers"] }
+  ];
+
+  let selectedGameMode = '30';
+  let studentName = 'Alumne';
+  let activeQuestions = [];
+  let currentQuestionIdx = 0;
+  let score = 0;
+  let totalQuestions = 30;
+  let timerInterval = null;
+  let secondsElapsed = 0;
+  let currentQuestionObj = null;
+
+  // AMAGAMENT INVIOLABLE VIA CLASS + INLINE STYLE !IMPORTANT
+  function showScreen(screenId) {
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => {
+      s.classList.remove('active');
+      s.style.setProperty('display', 'none', 'important');
+    });
+    const target = document.getElementById(screenId);
+    if (target) {
+      target.classList.add('active');
+      target.style.setProperty('display', 'flex', 'important');
+      target.style.flexDirection = 'column';
+      target.style.alignItems = 'center';
+    }
+  }
+
+  function playSound(type) {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(174.61, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      }
+    } catch (e) {}
+  }
+
+  function normalizeText(text) {
+    if (!text) return '';
+    let s = text.toLowerCase().trim();
+    s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    s = s.replace(/ç/g, "c");
+    s = s.replace(/^(l'|d'|el\s+|la\s+|els\s+|les\s+|del\s+|dels\s+|de\s+la\s+|de\s+)/i, '');
+    s = s.replace(/['’'`\-]/g, ' ');
+    s = s.replace(/\s+/g, ' ').trim();
+    return s;
+  }
+
+  function selectMode(mode) {
+    selectedGameMode = mode;
+    document.getElementById('btn-mode-30').classList.toggle('selected', mode === '30');
+    document.getElementById('btn-mode-all').classList.toggle('selected', mode === 'all');
+  }
+
+  function startQuiz() {
+    const nameEl = document.getElementById('student-name');
+    const nameVal = nameEl ? nameEl.value.trim() : '';
+    studentName = nameVal || 'Alumne';
+
+    let pool = selectedGameMode === '30' ? comarquesData.slice(0, 30) : [...comarquesData];
+
+    activeQuestions = [];
+    totalQuestions = 30;
+
+    for (let i = 0; i < totalQuestions; i++) {
+      const targetComarca = pool[Math.floor(Math.random() * pool.length)];
+      const qType = Math.floor(Math.random() * 2);
+      activeQuestions.push({ item: targetComarca, type: qType });
+    }
+
+    currentQuestionIdx = 0;
+    score = 0;
+    secondsElapsed = 0;
+
+    showScreen('screen-quiz');
+    startTimer();
+    showQuestion();
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      secondsElapsed++;
+      const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+      const timerEl = document.getElementById('timer-display');
+      if (timerEl) timerEl.innerText = `${mins}:${secs}`;
+    }, 1000);
+  }
+
+  function showQuestion() {
+    const feedbackBox = document.getElementById('feedback-box');
+    if (feedbackBox) {
+      feedbackBox.className = 'feedback-message';
+      feedbackBox.style.display = 'none';
+    }
+
+    const inputEl = document.getElementById('user-answer');
+    if (inputEl) inputEl.value = '';
+
+    currentQuestionObj = activeQuestions[currentQuestionIdx];
+    const c = currentQuestionObj.item;
+
+    const qCounter = document.getElementById('q-counter');
+    if (qCounter) qCounter.innerText = `${currentQuestionIdx + 1}/${totalQuestions}`;
+
+    const accEl = document.getElementById('accuracy-display');
+    const currentAcc = currentQuestionIdx === 0 ? 0 : Math.round((score / currentQuestionIdx) * 100);
+    if (accEl) accEl.innerText = `${currentAcc}%`;
+
+    const tagEl = document.getElementById('question-tag');
+    const textEl = document.getElementById('question-text');
+
+    if (currentQuestionObj.type === 0) {
+      if (tagEl) tagEl.innerText = "🏛️ Pregunta de Capital";
+      if (textEl) textEl.innerHTML = `Quina és la capital de la comarca de <span style="color:#4F46E5; font-weight:800;">${c.name}</span>?`;
+    } else {
+      if (tagEl) tagEl.innerText = "🏷️ Pregunta de Comarca";
+      if (textEl) textEl.innerHTML = `A quina comarca pertany la capital <span style="color:#4F46E5; font-weight:800;">${c.capital}</span>?`;
+    }
+
+    if (inputEl) setTimeout(() => inputEl.focus(), 50);
+  }
+
+  function checkAnswer() {
+    const inputEl = document.getElementById('user-answer');
+    const rawUserAns = inputEl ? inputEl.value : '';
+    const userNorm = normalizeText(rawUserAns);
+    const c = currentQuestionObj.item;
+    let isCorrect = false;
+    let expectedText = "";
+
+    if (currentQuestionObj.type === 0) {
+      expectedText = c.capital;
+      const validAnswers = [c.capital, ...(c.alts || [])].map(normalizeText);
+      isCorrect = validAnswers.includes(userNorm);
+    } else {
+      expectedText = c.name;
+      const validAnswers = [c.name, ...(c.alts || [])].map(normalizeText);
+      isCorrect = validAnswers.includes(userNorm);
+    }
+
+    processResult(isCorrect, expectedText);
+  }
+
+  function processResult(isCorrect, expectedAnswer) {
+    const feedbackBox = document.getElementById('feedback-box');
+
+    if (isCorrect) {
+      score++;
+      playSound('correct');
+      if (feedbackBox) {
+        feedbackBox.innerText = "✨ Molt bé! Resposta Correcta!";
+        feedbackBox.className = "feedback-message correct";
+        feedbackBox.style.display = 'block';
+      }
+    } else {
+      playSound('incorrect');
+      if (feedbackBox) {
+        feedbackBox.innerText = `❌ Incorrecte. La resposta correcta era: ${expectedAnswer}`;
+        feedbackBox.className = "feedback-message incorrect";
+        feedbackBox.style.display = 'block';
+      }
+    }
+
+    setTimeout(() => {
+      currentQuestionIdx++;
+      if (currentQuestionIdx < totalQuestions) {
+        showQuestion();
+      } else {
+        finishQuiz();
+      }
+    }, 1500);
+  }
+
+  function finishQuiz() {
+    clearInterval(timerInterval);
+
+    showScreen('screen-results');
+
+    const accuracy = Math.round((score / totalQuestions) * 100);
+    const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+    const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+    const timeFormatted = `${mins}:${secs}`;
+
+    const scoreEl = document.getElementById('res-score');
+    const accEl = document.getElementById('res-accuracy');
+    const timeEl = document.getElementById('res-time');
+
+    if (scoreEl) scoreEl.innerText = `${score} / ${totalQuestions}`;
+    if (accEl) accEl.innerText = `${accuracy}%`;
+    if (timeEl) timeEl.innerText = timeFormatted;
+
+    saveScoreToLeaderboard(studentName, selectedGameMode, score, timeFormatted, accuracy);
+  }
+
+  function saveScoreToLeaderboard(name, mode, scoreVal, timeVal, accuracyVal) {
+    let leaderboard = JSON.parse(localStorage.getItem('comarques_leaderboard') || '[]');
+    leaderboard.push({
+      name: name,
+      mode: mode === '30' ? '30 Comarques' : 'Totes (+30)',
+      score: scoreVal,
+      time: timeVal,
+      accuracy: accuracyVal
+    });
+
+    leaderboard.sort((a, b) => b.score - a.score || a.time.localeCompare(b.time));
+    leaderboard = leaderboard.slice(0, 10);
+
+    localStorage.setItem('comarques_leaderboard', JSON.stringify(leaderboard));
+    renderLeaderboard();
+  }
+
+  function renderLeaderboard() {
+    const tbody = document.getElementById('leaderboard-body');
+    if (!tbody) return;
+    let leaderboard = JSON.parse(localStorage.getItem('comarques_leaderboard') || '[]');
+
+    if (leaderboard.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#94A3B8;">Sense registres encara. Sigues el primer! 🚀</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = leaderboard.map((entry, idx) => `
+      <tr>
+        <td><strong>#${idx + 1}</strong></td>
+        <td><strong>${escapeHtml(entry.name)}</strong></td>
+        <td><small>${entry.mode}</small></td>
+        <td><strong style="color:#4F46E5;">${entry.score}/30</strong></td>
+        <td>${entry.time}</td>
+        <td><span style="color:#10B981; font-weight:700;">${entry.accuracy}%</span></td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+  }
+
+  function resetToStart() {
+    showScreen('screen-start');
+    renderLeaderboard();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    showScreen('screen-start');
+    renderLeaderboard();
+
+    const startBtn = document.getElementById('btn-start-game');
+    if (startBtn) {
+      startBtn.addEventListener('click', startQuiz);
+    }
+
+    const inputEl = document.getElementById('user-answer');
+    if (inputEl) {
+      inputEl.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+      });
+    }
+  });
+</script>
+</body>
+</html>
