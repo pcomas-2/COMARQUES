@@ -41,28 +41,74 @@
         .file-upload-btn { font-size: 0.85rem; background: #0284c7; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
         .file-upload-btn:hover { background: #0369a1; }
 
-        .map-wrapper { position: relative; width: 100%; min-height: 500px; border-radius: 12px; overflow: hidden; border: 2px solid #bae6fd; background-color: #e0f2fe; display: flex; align-items: center; justify-content: center; }
+        .map-wrapper { 
+            position: relative; 
+            width: 100%; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 2px solid #bae6fd; 
+            background-color: #e0f2fe;
+        }
+
         .map-image { width: 100%; height: auto; display: block; }
 
-        .comarca-pin {
-            position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -13px;
-            border-radius: 50%; background: rgba(2, 132, 199, 0.9); border: 2px solid #ffffff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.35); cursor: pointer; transition: transform 0.2s, background 0.2s;
-            display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; z-index: 10;
+        /* Capa SVG d'il·luminació de comarques */
+        .svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: auto;
         }
 
-        .comarca-pin:hover { transform: scale(1.4); background: #f59e0b; z-index: 25; }
-        .comarca-pin.correct { background: #22c55e !important; transform: scale(1.2); }
-        .comarca-pin.wrong { background: #ef4444 !important; animation: shake 0.4s ease; }
-        .comarca-pin.active-target { background: #facc15 !important; color: #0f172a; border-color: #d97706; animation: pulseGlow 1.2s infinite alternate; z-index: 30; }
-
-        @keyframes pulseGlow {
-            from { box-shadow: 0 0 0 0px rgba(250, 204, 21, 0.9); transform: scale(1); }
-            to { box-shadow: 0 0 0 14px rgba(250, 204, 21, 0); transform: scale(1.35); }
+        /* Estil de les regions comarcals */
+        .comarca-region {
+            fill: rgba(2, 132, 199, 0.05); /* Fons semitransparent per detectar clics */
+            stroke: rgba(15, 23, 42, 0.25);
+            stroke-width: 1.5;
+            cursor: pointer;
+            transition: all 0.25s ease-in-out;
         }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
-        .tooltip { position: absolute; background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; pointer-events: none; display: none; z-index: 100; white-space: nowrap; }
+        /* Efecte d'il·luminació quan es passa el ratolí */
+        .comarca-region:hover {
+            fill: rgba(56, 189, 248, 0.5) !important;
+            stroke: #0284c7 !important;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.8));
+        }
+
+        /* Comarca encertada (verd) */
+        .comarca-region.correct {
+            fill: rgba(34, 197, 94, 0.6) !important;
+            stroke: #15803d !important;
+            stroke-width: 2.5px;
+        }
+
+        /* Comarca equivocada (vermell) */
+        .comarca-region.wrong {
+            fill: rgba(239, 68, 68, 0.6) !important;
+            stroke: #b91c1c !important;
+            animation: shake 0.4s ease;
+        }
+
+        /* Comarca d'objectiu actiu / pregunta (groc fluorescent) */
+        .comarca-region.active-target {
+            fill: rgba(250, 204, 21, 0.65) !important;
+            stroke: #d97706 !important;
+            stroke-width: 3px;
+            animation: pulseGlowRegion 1.2s infinite alternate;
+        }
+
+        @keyframes pulseGlowRegion {
+            from { fill: rgba(250, 204, 21, 0.45); }
+            to { fill: rgba(250, 204, 21, 0.85); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
+        }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+
+        .tooltip { position: absolute; background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; pointer-events: none; display: none; z-index: 100; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
         .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
@@ -102,16 +148,19 @@
         <div class="map-card">
             <div class="map-controls">
                 <span id="mapStatusText" style="font-size: 0.85rem; color: #475569;">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Inicialitzant...
+                    <i class="fa-solid fa-spinner fa-spin"></i> Inicialitzant mapa...
                 </span>
                 <label class="file-upload-btn">
-                    <i class="fa-solid fa-file-image"></i> Seleccionar mapa local
+                    <i class="fa-solid fa-file-image"></i> Carregar imatge
                     <input type="file" id="imageUploader" accept="image/*" style="display: none;" onchange="handleManualImageUpload(event)">
                 </label>
             </div>
 
             <div class="map-wrapper" id="mapWrapper">
+                <!-- Imatge del mapa de l'ICGC -->
                 <img id="mapImage" class="map-image" alt="Mapa Comarcal de Catalunya">
+                <!-- Capa SVG superposada per il·luminar les comarques -->
+                <svg id="svgOverlay" class="svg-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none"></svg>
             </div>
             <div class="tooltip" id="tooltip"></div>
             <div class="attribution">
@@ -165,287 +214,4 @@
     </div>
 
     <script>
-        const COMARQUES = [
-            { name: "Alt Camp", capital: "Valls", x: 34.2, y: 63.5 },
-            { name: "Alt Empordà", capital: "Figueres", x: 64.5, y: 24.0 },
-            { name: "Alt Penedès", capital: "Vilafranca del Penedès", x: 39.5, y: 58.2 },
-            { name: "Alt Urgell", capital: "La Seu d'Urgell", x: 32.5, y: 22.5 },
-            { name: "Alta Ribagorça", capital: "El Pont de Suert", x: 18.0, y: 20.2 },
-            { name: "Anoia", capital: "Igualada", x: 36.5, y: 52.0 },
-            { name: "Bages", capital: "Manresa", x: 42.5, y: 43.5 },
-            { name: "Baix Camp", capital: "Reus", x: 29.2, y: 68.0 },
-            { name: "Baix Ebre", capital: "Tortosa", x: 18.5, y: 78.5 },
-            { name: "Baix Empordà", capital: "La Bisbal d'Empordà", x: 67.5, y: 33.5 },
-            { name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", x: 45.2, y: 56.5 },
-            { name: "Baix Penedès", capital: "El Vendrell", x: 36.2, y: 64.5 },
-            { name: "Barcelonès", capital: "Barcelona", x: 50.2, y: 55.2 },
-            { name: "Berguedà", capital: "Berga", x: 39.5, y: 30.5 },
-            { name: "Cerdanya", capital: "Puigcerdà", x: 40.2, y: 20.0 },
-            { name: "Conca de Barberà", capital: "Montblanc", x: 32.2, y: 56.2 },
-            { name: "Garraf", capital: "Vilanova i la Geltrú", x: 42.0, y: 62.5 },
-            { name: "Garrigues", capital: "Les Borges Blanques", x: 22.5, y: 58.5 },
-            { name: "Garrotxa", capital: "Olot", x: 56.5, y: 25.5 },
-            { name: "Gironès", capital: "Girona", x: 61.2, y: 33.2 },
-            { name: "Lluçanès", capital: "Prats de Lluçanès", x: 46.0, y: 33.0 },
-            { name: "Maresme", capital: "Mataró", x: 57.0, y: 50.5 },
-            { name: "Moianès", capital: "Moià", x: 46.2, y: 40.2 },
-            { name: "Montsià", capital: "Amposta", x: 13.5, y: 87.2 },
-            { name: "Noguera", capital: "Balaguer", x: 23.5, y: 42.5 },
-            { name: "Osona", capital: "Vic", x: 50.2, y: 35.5 },
-            { name: "Pallars Jussà", capital: "Tremp", x: 23.2, y: 30.2 },
-            { name: "Pallars Sobirà", capital: "Sort", x: 25.5, y: 16.2 },
-            { name: "Pla de l'Estany", capital: "Banyoles", x: 58.2, y: 28.5 },
-            { name: "Pla d'Urgell", capital: "Mollerussa", x: 23.2, y: 50.2 },
-            { name: "Priorat", capital: "Falset", x: 25.2, y: 65.5 },
-            { name: "Ribera d'Ebre", capital: "Móra d'Ebre", x: 21.2, y: 68.2 },
-            { name: "Ripollès", capital: "Ripoll", x: 48.2, y: 22.2 },
-            { name: "Segarra", capital: "Cervera", x: 32.2, y: 45.2 },
-            { name: "Segrià", capital: "Lleida", x: 16.2, y: 55.2 },
-            { name: "Selva", capital: "Santa Coloma de Farners", x: 58.2, y: 39.2 },
-            { name: "Solsonès", capital: "Solsona", x: 33.2, y: 35.2 },
-            { name: "Tarragonès", capital: "Tarragona", x: 36.2, y: 68.2 },
-            { name: "Terra Alta", capital: "Gandesa", x: 15.2, y: 72.2 },
-            { name: "Urgell", capital: "Tàrrega", x: 28.2, y: 50.2 },
-            { name: "Val d'Aran", capital: "Vielha e Mijaran", x: 20.2, y: 10.2 },
-            { name: "Vallès Occidental", capital: "Sabadell", x: 47.2, y: 50.2 },
-            { name: "Vallès Oriental", capital: "Granollers", x: 52.2, y: 47.2 }
-        ];
-
-        // Llista exhaustiva de possibles rutes/noms per detectar el fitxer automàticament
-        const IMAGE_CANDIDATES = [
-            'arxius/mapa2.jpg',
-            'arxius/mapa2.JPG',
-            'arxius/mapa2.png',
-            'arxius/mapa2.jpeg',
-            'arxius/mapa2_2.jpg',
-            'arxius/mapa2',
-            'mapa2.jpg',
-            'mapa2.png'
-        ];
-
-        let candidateIndex = 0;
-        let currentMode = 'map';
-        let currentQuestions = [];
-        let currentIndex = 0;
-        let correctCount = 0;
-        let errorCount = 0;
-        let timerSeconds = 0;
-        let timerInterval = null;
-
-        function loadMapImage() {
-            const img = document.getElementById('mapImage');
-            const statusText = document.getElementById('mapStatusText');
-
-            if (candidateIndex < IMAGE_CANDIDATES.length) {
-                const src = IMAGE_CANDIDATES[candidateIndex];
-                statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Provant ruta: <code>${src}</code>...`;
-                img.src = src;
-            } else {
-                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> No s'ha trobat la imatge a <code>arxius/mapa2.jpg</code>. Utilitza el botó per carregar-la.`;
-                img.style.display = 'none';
-            }
-        }
-
-        document.getElementById('mapImage').onerror = function() {
-            candidateIndex++;
-            loadMapImage();
-        };
-
-        document.getElementById('mapImage').onload = function() {
-            const statusText = document.getElementById('mapStatusText');
-            statusText.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Mapa carregat correctament (<code>${IMAGE_CANDIDATES[candidateIndex]}</code>)`;
-            this.style.display = 'block';
-        };
-
-        function handleManualImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('mapImage');
-                    img.src = e.target.result;
-                    img.style.display = 'block';
-                    document.getElementById('mapStatusText').innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Fitxer carregat manualment: <strong>${file.name}</strong>`;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'correct') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
-
-        function normalizeText(str) {
-            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[''’\-]/g, " ").replace(/\s+/g, " ").trim();
-        }
-
-        function initMapPins() {
-            const wrapper = document.getElementById('mapWrapper');
-            document.querySelectorAll('.comarca-pin').forEach(el => el.remove());
-
-            COMARQUES.forEach((c, idx) => {
-                const pin = document.createElement('div');
-                pin.className = 'comarca-pin';
-                pin.style.left = c.x + '%';
-                pin.style.top = c.y + '%';
-                pin.dataset.index = idx;
-                pin.innerText = (idx + 1);
-
-                const tooltip = document.getElementById('tooltip');
-                pin.addEventListener('mouseenter', (e) => {
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${c.name}</strong><br>Capital: ${c.capital}`;
-                    tooltip.style.left = (e.pageX + 10) + 'px';
-                    tooltip.style.top = (e.pageY - 30) + 'px';
-                });
-
-                pin.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-                pin.addEventListener('click', () => onPinClick(idx));
-                wrapper.appendChild(pin);
-            });
-        }
-
-        function setGameMode(mode) {
-            currentMode = mode;
-            document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
-            document.getElementById('modeCapitalBtn').classList.toggle('active', mode === 'capital');
-            document.getElementById('capitalInputContainer').style.display = mode === 'capital' ? 'block' : 'none';
-            restartGame();
-        }
-
-        function restartGame() {
-            currentQuestions = [...COMARQUES].sort(() => Math.random() - 0.5);
-            currentIndex = 0;
-            correctCount = 0;
-            errorCount = 0;
-            timerSeconds = 0;
-
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timerSeconds++;
-                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-                const secs = String(timerSeconds % 60).padStart(2, '0');
-                document.getElementById('statTime').innerText = `${mins}:${secs}`;
-            }, 1000);
-
-            document.querySelectorAll('.comarca-pin').forEach(pin => pin.className = 'comarca-pin');
-            updateStats();
-            showCurrentQuestion();
-        }
-
-        function showCurrentQuestion() {
-            if (currentIndex >= currentQuestions.length) {
-                endGame();
-                return;
-            }
-
-            const current = currentQuestions[currentIndex];
-            document.getElementById('questionTitle').innerText = `Pregunta ${currentIndex + 1} de ${currentQuestions.length}`;
-            document.getElementById('questionTarget').innerText = current.name;
-
-            document.querySelectorAll('.comarca-pin').forEach(p => p.classList.remove('active-target'));
-
-            if (currentMode === 'capital') {
-                const pinIndex = COMARQUES.findIndex(c => c.name === current.name);
-                const pin = document.querySelector(`.comarca-pin[data-index="${pinIndex}"]`);
-                if (pin) pin.classList.add('active-target');
-                document.getElementById('capitalInput').value = '';
-                document.getElementById('capitalInput').focus();
-            }
-        }
-
-        function onPinClick(idx) {
-            if (currentMode !== 'map') return;
-
-            const target = currentQuestions[currentIndex];
-            const clicked = COMARQUES[idx];
-            const pin = document.querySelector(`.comarca-pin[data-index="${idx}"]`);
-
-            if (clicked.name === target.name) {
-                playSound('correct');
-                pin.classList.add('correct');
-                correctCount++;
-                currentIndex++;
-                updateStats();
-                showCurrentQuestion();
-            } else {
-                playSound('wrong');
-                pin.classList.add('wrong');
-                setTimeout(() => pin.classList.remove('wrong'), 500);
-                errorCount++;
-                updateStats();
-            }
-        }
-
-        function checkCapitalAnswer() {
-            if (currentMode !== 'capital') return;
-
-            const inputVal = document.getElementById('capitalInput').value;
-            const target = currentQuestions[currentIndex];
-
-            if (normalizeText(inputVal) === normalizeText(target.capital)) {
-                playSound('correct');
-                correctCount++;
-                currentIndex++;
-                updateStats();
-                showCurrentQuestion();
-            } else {
-                playSound('wrong');
-                errorCount++;
-                updateStats();
-                const inputEl = document.getElementById('capitalInput');
-                inputEl.style.borderColor = '#ef4444';
-                setTimeout(() => inputEl.style.borderColor = '#cbd5e1', 600);
-            }
-        }
-
-        document.getElementById('capitalInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkCapitalAnswer();
-        });
-
-        function updateStats() {
-            document.getElementById('statCorrect').innerText = correctCount;
-            document.getElementById('statErrors').innerText = errorCount;
-            const total = correctCount + errorCount;
-            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 100;
-            document.getElementById('statAccuracy').innerText = accuracy + '%';
-        }
-
-        function endGame() {
-            clearInterval(timerInterval);
-            playSound('correct');
-            confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-            alert(`🎉 Felicitats! Has completat totes les preguntes.\nPrecisió: ${document.getElementById('statAccuracy').innerText}\nTemps: ${document.getElementById('statTime').innerText}`);
-        }
-
-        window.addEventListener('load', () => {
-            loadMapImage();
-            initMapPins();
-            restartGame();
-        });
-    </script>
-</body>
-</html>
+        // Coordenades poligonals aproximades per il·luminar
