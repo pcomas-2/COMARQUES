@@ -66,7 +66,7 @@
       margin-top: 4px;
     }
 
-    /* CONTROL NET DE PANTALLES SENSE CONFLICTES */
+    /* PANTALLES: S'AMAGUEN PER DEFECTE */
     .screen {
       display: none;
       padding: 30px;
@@ -74,16 +74,11 @@
       box-sizing: border-box;
     }
 
-    .screen.active {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
     /* PANTALLA INICIAL */
     .welcome-card {
       max-width: 550px;
       width: 100%;
+      margin: 0 auto;
       text-align: center;
     }
 
@@ -356,7 +351,7 @@
   </header>
 
   <!-- PANTALLA 1: INICI I REGISTRE -->
-  <div id="screen-start" class="screen active">
+  <div id="screen-start" class="screen" style="display: flex; flex-direction: column; align-items: center;">
     <div class="welcome-card">
       <div class="input-group">
         <label for="student-name">🧑‍🎓 El teu Nom / Usuari:</label>
@@ -400,15 +395,6 @@
   </div>
 
   <!-- PANTALLA 2: JOC QUIZZ -->
-  <div id="screen-quiz" class="screen">
+  <div id="screen-quiz" class="screen" style="display: none;">
     <div class="quiz-container">
-      <!-- BARRA D'ESTADÍSTIQUES -->
-      <div class="stats-bar">
-        <div class="stat-badge">
-          <span>❓ Pregunta:</span> <span id="q-counter">1/30</span>
-        </div>
-        <div class="stat-badge">
-          <span>⏱️ Temps:</span> <span id="timer-display">00:00</span>
-        </div>
-        <div class="stat-badge">
-          <span>📊 Encerts:</span> <span id="accuracy-display">0%</span>
+      <!-- BAR
