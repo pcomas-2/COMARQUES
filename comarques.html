@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Les Comarques de Catalunya - Joc Educatiu de Primària</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+    <title>El Joc de les Comarques de Catalunya</title>
+
     <!-- Canvas Confetti CDN -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- FontAwesome CDN for kid-friendly icons -->
+    <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts -->
@@ -20,1109 +17,674 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Fredoka', 'Quicksand', sans-serif;
             background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0e7ff 100%);
             min-height: 100vh;
+            color: #1e293b;
+            padding: 20px;
             user-select: none;
         }
 
-        /* Pulsing & highlight effects for map comarques */
-        .comarca-path {
-            transition: all 0.25s ease-in-out;
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: #0369a1;
+            text-shadow: 2px 2px 0px #bae6fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        header p {
+            color: #475569;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 992px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Map Container */
+        .map-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #bae6fd;
+            background-color: #f8fafc;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Interactive Comarca Markers */
+        .comarca-pin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            margin-left: -12px;
+            margin-top: -12px;
+            border-radius: 50%;
+            background: rgba(2, 132, 199, 0.85);
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             cursor: pointer;
-            stroke: #1e293b;
-            stroke-width: 1.2;
-            stroke-linejoin: round;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 10;
         }
 
-        .comarca-path:hover {
-            filter: brightness(1.12) drop-shadow(0 4px 6px rgba(0,0,0,0.25));
-            stroke-width: 2.2;
-            stroke: #0284c7;
+        .comarca-pin:hover {
+            transform: scale(1.4);
+            background: #f59e0b;
+            z-index: 20;
         }
 
-        .comarca-active {
-            fill: #facc15 !important; /* Vivid Yellow */
-            stroke: #d97706 !important;
-            stroke-width: 3 !important;
+        .comarca-pin.correct {
+            background: #22c55e !important;
+            border-color: #ffffff;
+            transform: scale(1.2);
+        }
+
+        .comarca-pin.wrong {
+            background: #ef4444 !important;
+            animation: shake 0.4s ease;
+        }
+
+        .comarca-pin.active-target {
+            background: #facc15 !important;
+            color: #0f172a;
+            border-color: #d97706;
             animation: pulseGlow 1.2s infinite alternate;
-        }
-
-        .comarca-correct {
-            fill: #22c55e !important; /* Green */
-            stroke: #15803d !important;
-            stroke-width: 3 !important;
-        }
-
-        .comarca-wrong {
-            fill: #ef4444 !important; /* Red */
-            stroke: #b91c1c !important;
-            stroke-width: 3 !important;
+            z-index: 30;
         }
 
         @keyframes pulseGlow {
-            0% {
-                filter: drop-shadow(0 0 4px #facc15) brightness(1);
+            from {
+                box-shadow: 0 0 0 0px rgba(250, 204, 21, 0.8);
+                transform: scale(1);
             }
-            100% {
-                filter: drop-shadow(0 0 14px #eab308) brightness(1.2);
+            to {
+                box-shadow: 0 0 0 12px rgba(250, 204, 21, 0);
+                transform: scale(1.3);
             }
         }
 
-        /* Bounce animation for badges */
-        .bounce-gentle {
-            animation: bounceGentle 2s infinite;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
         }
 
-        @keyframes bounceGentle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: #0f172a;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
 
-        /* Custom scrollbars */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* Sidebar & Panel */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 8px;
+
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 8px;
+
+        .game-status {
+            text-align: center;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+
+        .question-box {
+            background: #f0f9ff;
+            border: 2px dashed #38bdf8;
+            border-radius: 16px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .question-box h3 {
+            font-size: 0.95rem;
+            color: #0284c7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-target {
+            font-size: 1.6rem;
+            color: #0f172a;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #0284c7;
+        }
+
+        .btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #0369a1;
+            transform: translateY(-2px);
+        }
+
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+
+        .btn-warning { background: #f59e0b; }
+        .btn-warning:hover { background: #d97706; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card .val {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0284c7;
+        }
+
+        .stat-card .lbl {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* Leaderboard */
+        .leaderboard-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        .leaderboard-item:nth-child(1) { font-weight: bold; color: #d97706; }
+        .leaderboard-item:nth-child(2) { font-weight: bold; color: #64748b; }
+        .leaderboard-item:nth-child(3) { font-weight: bold; color: #b45309; }
+
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.85rem;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            background: #ffffff;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: #e0f2fe;
+            border-color: #0284c7;
+            color: #0369a1;
+        }
+
+        .attribution {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 15px;
         }
     </style>
 </head>
-<body class="text-slate-800 flex flex-col min-h-screen">
+<body>
 
-    <!-- Top Header Navigation -->
-    <header class="bg-white/80 backdrop-blur-md border-b border-sky-100 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="goToHome()">
-                <div class="bg-gradient-to-tr from-sky-500 to-amber-400 p-2.5 rounded-2xl shadow-md text-white">
-                    <i class="fa-solid me-1 fa-map-location-dot text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-600 via-indigo-600 to-amber-500 bg-clip-text text-transparent">
-                        Comarques de Catalunya
-                    </h1>
-                    <p class="text-xs text-slate-500 font-medium hidden sm:block">Aventura Geogràfica per a Primària</p>
-                </div>
-            </div>
-
-            <!-- Controls (Sound & User info) -->
-            <div class="flex items-center space-x-3">
-                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition flex items-center space-x-1 text-sm font-semibold">
-                    <i id="soundIcon" class="fa-solid fa-volume-high text-sky-600"></i>
-                    <span class="hidden md:inline">So</span>
-                </button>
-                <div id="userInfoHeader" class="hidden flex items-center space-x-2 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-xl">
-                    <span id="userAvatarHeader" class="text-xl">🦊</span>
-                    <span id="userNameHeader" class="font-bold text-sky-800 text-sm">Alumne</span>
-                </div>
-            </div>
-        </div>
+    <header>
+        <h1><i class="fa-solid fa-map-location-dot"></i> El Joc de les Comarques</h1>
+        <p>Aprende i practica les comarques i capitals de Catalunya</p>
     </header>
 
-    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6">
-        
-        <!-- PANTALLA 1: Registre i Ranking (Inici) -->
-        <section id="screenStart" class="space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
-                <!-- Form / Intro Card -->
-                <div class="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-sky-100 flex flex-col justify-between">
-                    <div>
-                        <div class="inline-flex items-center space-x-2 bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-bold mb-4">
-                            <i class="fa-solid fa-star text-amber-500"></i>
-                            <span>Repte de Geofrafia per Primària</span>
-                        </div>
-
-                        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-3 leading-tight">
-                            Demostra quant saps sobre les comarques i capitals! 🗺️✨
-                        </h2>
-                        <p class="text-slate-600 text-sm md:text-base mb-6 leading-relaxed">
-                            Supera el quiz de <strong>30 preguntes</strong>, descobreix les capitals, troba les comarques al mapa interactiu i entra al <strong>Rànking dels millors geògrafs/es</strong>.
-                        </p>
-
-                        <!-- Form User Registration -->
-                        <form id="startForm" onsubmit="handleStartQuiz(event)" class="space-y-5 bg-sky-50/70 p-5 rounded-2xl border border-sky-100">
-                            <div>
-                                <label class="block text-slate-700 font-bold mb-2 text-sm md:text-base">
-                                    <i class="fa-solid fa-user-astronaut text-sky-500 me-1"></i> Introdueix el teu Nom o Àlies:
-                                </label>
-                                <input type="text" id="usernameInput" required maxlength="18" placeholder="Ex. Marc, Laia_3A, Pol..." class="w-full px-4 py-3 rounded-xl border-2 border-sky-200 focus:border-sky-500 focus:outline-none text-slate-800 font-semibold text-lg bg-white shadow-inner">
-                            </div>
-
-                            <!-- Avatar Selection -->
-                            <div>
-                                <label class="block text-slate-700 font-bold mb-2 text-sm">
-                                    Tria el teu Avatar:
-                                </label>
-                                <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="avatarSelector">
-                                    <!-- Avatars dynamically populated -->
-                                </div>
-                            </div>
-
-                            <button type="submit" class="w-full py-4 px-6 bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white font-extrabold text-lg rounded-2xl shadow-lg hover:shadow-xl transform active:scale-98 transition flex items-center justify-center space-x-2">
-                                <span>Començar el Quiz!</span>
-                                <i class="fa-solid fa-circle-play text-xl"></i>
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Game info tags -->
-                    <div class="mt-6 grid grid-cols-3 gap-2 text-center text-xs font-semibold text-slate-500">
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                            <i class="fa-solid fa-clock text-sky-500 text-base mb-1 block"></i>
-                            <span>30 Preguntes</span>
-                        </div>
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                            <i class="fa-solid fa-map-marked-alt text-amber-500 text-base mb-1 block"></i>
-                            <span>Mapa Interactiu</span>
-                        </div>
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                            <i class="fa-solid fa-spell-check text-emerald-500 text-base mb-1 block"></i>
-                            <span>Text Flexible</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Leaderboard Card -->
-                <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-xl border border-sky-100">
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                        <div class="flex items-center space-x-2">
-                            <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
-                                <i class="fa-solid fa-trophy text-lg"></i>
-                            </div>
-                            <h3 class="font-bold text-slate-800 text-lg">Rànking de Millors Puntuacions</h3>
-                        </div>
-                        <button onclick="loadLeaderboard()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg transition">
-                            <i class="fa-solid fa-rotate-right me-1"></i> Actualitzar
-                        </button>
-                    </div>
-
-                    <div id="leaderboardList" class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-                        <!-- Loading spinner state -->
-                        <div class="text-center py-8 text-slate-400">
-                            <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-sky-500"></i>
-                            <p class="text-xs">Carregant la millor classificació...</p>
-                        </div>
-                    </div>
-                </div>
-
+    <div class="main-layout">
+        <!-- Columna Esquerra: Mapa -->
+        <div class="map-card">
+            <div class="map-wrapper" id="mapWrapper">
+                <!-- Imatge del mapa (carrega des de la carpeta d'arxius) -->
+                <img id="mapImage" class="map-image" src="arxius/mapa2.jpg" onerror="this.onerror=null; this.src='mapa2.jpg';" alt="Mapa Comarcal de Catalunya">
+                <!-- Els pins de les comarques es generen dinàmicament aquí -->
             </div>
-        </section>
+            <div class="tooltip" id="tooltip"></div>
+            <div class="attribution">
+                Mapes oficials: <strong>Institut Cartogràfic i Geològic de Catalunya (ICGC)</strong> (CC-BY).
+            </div>
+        </div>
 
-        <!-- PANTALLA 2: Quiz de les Comarques -->
-        <section id="screenQuiz" class="hidden space-y-4">
-            
-            <!-- Top HUD Bar -->
-            <div class="bg-white rounded-2xl p-4 shadow-md border border-sky-100 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-sky-100 text-sky-700 px-3 py-1.5 rounded-xl font-extrabold text-sm flex items-center space-x-1">
-                        <i class="fa-solid fa-list-ol text-sky-500"></i>
-                        <span>Pregunta <span id="hudQuestionCurrent">1</span>/30</span>
-                    </div>
-                    <div class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl font-bold text-sm flex items-center space-x-1">
-                        <i class="fa-solid fa-bullseye text-emerald-600"></i>
-                        <span id="hudAccuracy">Encerts: 100%</span>
+        <!-- Columna Dreta: Controls i Estadístiques -->
+        <div class="sidebar">
+            <div class="card game-status">
+                <div class="mode-selector">
+                    <button class="mode-btn active" onclick="setGameMode('map')" id="modeMapBtn">Ubicar al Mapa</button>
+                    <button class="mode-btn" onclick="setGameMode('capital')" id="modeCapitalBtn">Encertar Capital</button>
+                </div>
+
+                <div class="question-box">
+                    <h3 id="questionTitle">Pregunta 1/30</h3>
+                    <div class="question-target" id="questionTarget">Carregant...</div>
+                </div>
+
+                <!-- Input només per al mode Capital -->
+                <div id="capitalInputContainer" style="display: none;">
+                    <div class="input-group">
+                        <input type="text" id="capitalInput" placeholder="Escriu la capital..." autocomplete="off">
+                        <button class="btn btn-success" onclick="checkCapitalAnswer()">Comprovar</button>
                     </div>
                 </div>
 
-                <!-- Live Timer & Points -->
-                <div class="flex items-center space-x-3">
-                    <div id="timerContainer" class="bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-xl font-extrabold text-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-stopwatch text-amber-500 animate-pulse"></i>
-                        <span id="hudTimer">05:00</span>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-warning" onclick="restartGame()"><i class="fa-solid fa-rotate-right"></i> Reiniciar</button>
+                </div>
+
+                <!-- Estadístiques -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="val" id="statCorrect">0</div>
+                        <div class="lbl">Encerts</div>
                     </div>
-                    <div class="bg-indigo-50 border border-indigo-200 text-indigo-800 px-3.5 py-1.5 rounded-xl font-black text-sm flex items-center space-x-1">
-                        <i class="fa-solid fa-star text-indigo-500"></i>
-                        <span id="hudScore">0 Punts</span>
+                    <div class="stat-card">
+                        <div class="val" id="statErrors">0</div>
+                        <div class="lbl">Errors</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="statAccuracy">100%</div>
+                        <div class="lbl">Precisió</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="statTime">00:00</div>
+                        <div class="lbl">Temps</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Interactive Game Area (Map + Question Panel) -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-                
-                <!-- SVG Map Box -->
-                <div class="lg:col-span-7 bg-white rounded-3xl p-4 shadow-lg border border-sky-100 flex flex-col justify-between relative min-h-[360px] md:min-h-[460px]">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            <i class="fa-solid fa-map me-1 text-sky-500"></i> Mapa de Catalunya
-                        </span>
-                        <span id="mapInstructionHint" class="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-lg font-semibold">
-                            Observa el mapa
-                        </span>
-                    </div>
-
-                    <!-- Interactive SVG Canvas -->
-                    <div class="relative w-full h-full flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 p-2 border border-slate-100">
-                        <svg id="cataloniaMapSvg" viewBox="0 0 800 680" class="w-full h-auto max-h-[500px] drop-shadow-md">
-                            <!-- SVG paths populated dynamically -->
-                        </svg>
-
-                        <!-- Tooltip on hover -->
-                        <div id="mapTooltip" class="absolute pointer-events-none opacity-0 bg-slate-900/90 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-lg transition-opacity duration-150 z-30">
-                            Comarca
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Question Controls Box -->
-                <div class="lg:col-span-5 bg-white rounded-3xl p-5 shadow-lg border border-sky-100 flex flex-col justify-between space-y-4">
-                    
-                    <div>
-                        <!-- Question Header / Type Badge -->
-                        <div class="flex items-center space-x-2 mb-3">
-                            <span id="qTypeBadge" class="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide">
-                                Pregunta
-                            </span>
-                        </div>
-
-                        <!-- Question Prompt -->
-                        <h3 id="questionPromptText" class="text-xl md:text-2xl font-black text-slate-800 mb-4 leading-snug">
-                            Carregant pregunta...
-                        </h3>
-
-                        <!-- Sub-prompt / instructions -->
-                        <p id="questionSubPrompt" class="text-sm text-slate-500 mb-4">
-                            Escriu la resposta correcta a la casella de sota:
-                        </p>
-
-                        <!-- Answer Input Form (For types 1 and 2) -->
-                        <div id="inputAnswerContainer" class="space-y-3">
-                            <input type="text" id="userAnswerInput" autocomplete="off" placeholder="Escriu la teva resposta aquí..." class="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none text-slate-800 font-bold text-lg bg-slate-50 focus:bg-white transition shadow-inner">
-                            
-                            <button id="submitAnswerBtn" onclick="submitTextAnswer()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-base rounded-2xl shadow-md active:scale-98 transition flex items-center justify-center space-x-2">
-                                <span>Comprovar Resposta</span>
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
-                        </div>
-
-                        <!-- Click on map notice (For type 3) -->
-                        <div id="clickMapNotice" class="hidden bg-amber-50 border-2 border-dashed border-amber-300 p-4 rounded-2xl text-center space-y-2">
-                            <i class="fa-solid fa-hand-pointer text-amber-500 text-3xl animate-bounce"></i>
-                            <p class="font-extrabold text-amber-900 text-sm">Fes clic directament sobre la comarca al mapa de l'esquerra!</p>
-                        </div>
-                    </div>
-
-                    <!-- Feedback Box (Success / Error) -->
-                    <div id="feedbackBox" class="hidden p-4 rounded-2xl border-2 transition-all">
-                        <div class="flex items-start space-x-3">
-                            <div id="feedbackIcon" class="text-2xl pt-0.5">
-                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
-                            </div>
-                            <div class="flex-grow">
-                                <h4 id="feedbackTitle" class="font-extrabold text-base mb-0.5">Molt bé!</h4>
-                                <p id="feedbackText" class="text-xs font-semibold text-slate-600">Resposta correcta.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Next Question Action Button -->
-                    <button id="nextQuestionBtn" onclick="nextQuestion()" class="hidden w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg rounded-2xl shadow-lg active:scale-98 transition flex items-center justify-center space-x-2">
-                        <span>Següent Pregunta</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-
-                </div>
-
+            <!-- Taula de Classificació -->
+            <div class="card">
+                <h3><i class="fa-solid fa-trophy" style="color: #f59e0b;"></i> Millors Puntuacions</h3>
+                <ul class="leaderboard-list" id="leaderboardList">
+                    <li class="leaderboard-item"><span>1. Jugador Pro</span> <span>100% (01:20)</span></li>
+                    <li class="leaderboard-item"><span>2. Geògraf Cat</span> <span>95% (01:45)</span></li>
+                    <li class="leaderboard-item"><span>3. Estudiant123</span> <span>90% (02:10)</span></li>
+                </ul>
             </div>
+        </div>
+    </div>
 
-        </section>
-
-        <!-- PANTALLA 3: Resultats Final -->
-        <section id="screenResults" class="hidden max-w-3xl mx-auto space-y-6">
-            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-2xl border border-sky-100 text-center relative overflow-hidden">
-                
-                <!-- Decorative background elements -->
-                <div class="absolute -top-12 -right-12 w-40 h-40 bg-amber-200/40 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-sky-200/40 rounded-full blur-2xl pointer-events-none"></div>
-
-                <div class="relative z-10 space-y-6">
-                    
-                    <!-- Trophy Mascot Header -->
-                    <div class="inline-block p-4 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-3xl shadow-lg bounce-gentle text-white text-5xl mb-2">
-                        🏆
-                    </div>
-
-                    <h2 class="text-3xl md:text-4xl font-black text-slate-800">
-                        Felicitats, <span id="resUserName" class="text-sky-600">Alumne</span>! 🎉
-                    </h2>
-                    <p id="resRankBadge" class="inline-block bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-full text-sm font-black">
-                        Mestre de les Comarques
-                    </p>
-
-                    <!-- Score Breakdown Grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 block mb-1 uppercase">Puntuació</span>
-                            <span id="resScore" class="text-2xl font-black text-indigo-600">0</span>
-                            <span class="text-xs text-slate-400 block">punts</span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 block mb-1 uppercase">Encerts</span>
-                            <span id="resCorrect" class="text-2xl font-black text-emerald-600">0/30</span>
-                            <span id="resAccuracy" class="text-xs text-slate-400 block">(0%)</span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 block mb-1 uppercase">Temps Emprat</span>
-                            <span id="resTime" class="text-2xl font-black text-amber-600">00:00</span>
-                            <span class="text-xs text-slate-400 block">minuts</span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 block mb-1 uppercase">Ràtxa Màxima</span>
-                            <span id="resStreak" class="text-2xl font-black text-rose-500">0</span>
-                            <span class="text-xs text-slate-400 block">seguits</span>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-6">
-                        <button onclick="restartQuiz()" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-extrabold text-base rounded-2xl shadow-lg active:scale-98 transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-rotate-right me-1"></i>
-                            <span>Tornar a Jugar</span>
-                        </button>
-                        <button onclick="goToHome()" class="w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-2xl transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-users me-1"></i>
-                            <span>Canviar d'Usuari</span>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="bg-white/60 border-t border-sky-100 py-4 mt-auto text-center text-xs text-slate-500">
-        <p>Desenvolupat per a l'aprenentatge actiu de les Comarques i Capitals de Catalunya 🗺️</p>
-    </footer>
-
-    <script type="module">
-        // Import Firebase JS modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase Configuration & Initialization Guard
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'comarques-cat-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        
-        let db = null;
-        let auth = null;
-
-        async function initFirebase() {
-            if (!firebaseConfig) {
-                console.warn("Firebase config not available. Using local storage mode.");
-                return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.warn("Firebase init failed, fallback to local leaderboard", e);
-            }
-        }
-        initFirebase();
-
-        // Global dataset of the 42 comarques of Catalonia
-        const COMARQUES_DATA = [
-            { id: "val_d_aran", name: "Val d'Aran", capital: "Vielha e Mijaran", altCapitals: ["Vielha"], vegueria: "Alt Pirineu", path: "M 120,60 L 160,50 L 175,80 L 150,110 L 110,95 Z" },
-            { id: "alta_ribagorca", name: "Alta Ribagorça", capital: "El Pont de Suert", altCapitals: ["Pont de Suert"], vegueria: "Alt Pirineu", path: "M 150,110 L 175,80 L 205,100 L 195,145 L 160,140 Z" },
-            { id: "pallars_sobira", name: "Pallars Sobirà", capital: "Sort", altCapitals: [], vegueria: "Alt Pirineu", path: "M 175,80 L 235,70 L 260,115 L 215,140 L 205,100 Z" },
-            { id: "pallars_jussa", name: "Pallars Jussà", capital: "Tremp", altCapitals: [], vegueria: "Alt Pirineu", path: "M 195,145 L 215,140 L 255,160 L 245,210 L 180,190 Z" },
-            { id: "alt_urgell", name: "Alt Urgell", capital: "La Seu d'Urgell", altCapitals: ["Seu d'Urgell", "Seu Urgell"], vegueria: "Alt Pirineu", path: "M 260,115 L 320,105 L 335,160 L 280,175 L 255,160 Z" },
-            { id: "cerdanya", name: "Cerdanya", capital: "Puigcerdà", altCapitals: [], vegueria: "Alt Pirineu", path: "M 320,105 L 390,95 L 405,135 L 345,150 L 335,160 Z" },
-            { id: "ripolles", name: "Ripollès", capital: "Ripoll", altCapitals: [], vegueria: "Comarques Gironines", path: "M 390,95 L 475,85 L 490,140 L 420,155 L 405,135 Z" },
-            { id: "garrotxa", name: "Garrotxa", capital: "Olot", altCapitals: [], vegueria: "Comarques Gironines", path: "M 475,85 L 545,95 L 535,155 L 485,150 L 490,140 Z" },
-            { id: "alt_emporda", name: "Alt Empordà", capital: "Figueres", altCapitals: [], vegueria: "Comarques Gironines", path: "M 545,95 L 650,80 L 670,160 L 575,170 L 535,155 Z" },
-            { id: "pla_de_l_estany", name: "Pla de l'Estany", capital: "Banyoles", altCapitals: [], vegueria: "Comarques Gironines", path: "M 535,155 L 575,170 L 560,210 L 520,200 Z" },
-            { id: "girones", name: "Gironès", capital: "Girona", altCapitals: [], vegueria: "Comarques Gironines", path: "M 520,200 L 560,210 L 610,215 L 585,260 L 535,250 Z" },
-            { id: "baix_emporda", name: "Baix Empordà", capital: "La Bisbal d'Empordà", altCapitals: ["Bisbal d'Empordà", "La Bisbal"], vegueria: "Comarques Gironines", path: "M 575,170 L 670,160 L 660,240 L 610,215 Z" },
-            { id: "selva", name: "Selva", capital: "Santa Coloma de Farners", altCapitals: [], vegueria: "Comarques Gironines", path: "M 485,150 L 535,155 L 520,200 L 535,250 L 500,290 L 460,220 Z" },
-            { id: "noguera", name: "Noguera", capital: "Balaguer", altCapitals: [], vegueria: "Ponent", path: "M 180,190 L 245,210 L 270,260 L 210,310 L 165,265 Z" },
-            { id: "pla_d_urgell", name: "Pla d'Urgell", capital: "Mollerussa", altCapitals: [], vegueria: "Ponent", path: "M 210,310 L 250,300 L 260,335 L 215,345 Z" },
-            { id: "urgell", name: "Urgell", capital: "Tàrrega", altCapitals: [], vegueria: "Ponent", path: "M 250,300 L 300,285 L 310,330 L 260,335 Z" },
-            { id: "segria", name: "Segrià", capital: "Lleida", altCapitals: [], vegueria: "Ponent", path: "M 145,300 L 210,310 L 215,345 L 180,410 L 135,360 Z" },
-            { id: "garrigues", name: "Garrigues", capital: "Les Borges Blanques", altCapitals: ["Borges Blanques"], vegueria: "Ponent", path: "M 215,345 L 260,335 L 275,395 L 215,405 Z" },
-            { id: "segarra", name: "Segarra", capital: "Cervera", altCapitals: [], vegueria: "Ponent", path: "M 300,285 L 350,270 L 355,325 L 310,330 Z" },
-            { id: "solsones", name: "Solsonès", capital: "Solsona", altCapitals: [], vegueria: "Comarques Centrals", path: "M 280,175 L 335,160 L 350,225 L 290,235 Z" },
-            { id: "bergueda", name: "Berguedà", capital: "Berga", altCapitals: [], vegueria: "Comarques Centrals", path: "M 345,150 L 405,135 L 420,155 L 400,220 L 350,225 Z" },
-            { id: "osona", name: "Osona", capital: "Vic", altCapitals: [], vegueria: "Comarques Centrals", path: "M 420,155 L 490,140 L 485,220 L 415,235 Z" },
-            { id: "moianes", name: "Moianès", capital: "Moià", altCapitals: [], vegueria: "Comarques Centrals", path: "M 390,235 L 425,230 L 420,265 L 385,270 Z" },
-            { id: "bages", name: "Bages", capital: "Manresa", altCapitals: [], vegueria: "Comarques Centrals", path: "M 350,225 L 400,220 L 385,270 L 330,280 Z" },
-            { id: "anoia", name: "Anoia", capital: "Igualada", altCapitals: [], vegueria: "Penedès", path: "M 330,280 L 385,270 L 375,340 L 315,335 Z" },
-            { id: "conca_de_barbera", name: "Conca de Barberà", capital: "Montblanc", altCapitals: [], vegueria: "Camp de Tarragona", path: "M 275,395 L 325,370 L 335,420 L 285,430 Z" },
-            { id: "alt_camp", name: "Alt Camp", capital: "Valls", altCapitals: [], vegueria: "Camp de Tarragona", path: "M 285,430 L 345,410 L 350,460 L 295,475 Z" },
-            { id: "priorat", name: "Priorat", capital: "Falset", altCapitals: [], vegueria: "Camp de Tarragona", path: "M 200,435 L 250,420 L 255,470 L 205,480 Z" },
-            { id: "ribera_d_ebre", name: "Ribera d'Ebre", capital: "Móra d'Ebre", altCapitals: [], vegueria: "Terres de l'Ebre", path: "M 150,430 L 200,435 L 205,480 L 155,490 Z" },
-            { id: "terra_alta", name: "Terra Alta", capital: "Gandesa", altCapitals: [], vegueria: "Terres de l'Ebre", path: "M 95,440 L 150,430 L 155,490 L 105,495 Z" },
-            { id: "baix_ebre", name: "Baix Ebre", capital: "Tortosa", altCapitals: [], vegueria: "Terres de l'Ebre", path: "M 115,495 L 180,485 L 195,550 L 130,560 Z" },
-            { id: "montsia", name: "Montsià", capital: "Amposta", altCapitals: [], vegueria: "Terres de l'Ebre", path: "M 130,560 L 195,550 L 180,630 L 120,610 Z" },
-            { id: "baix_camp", name: "Baix Camp", capital: "Reus", altCapitals: [], vegueria: "Camp de Tarragona", path: "M 255,470 L 305,460 L 295,515 L 245,520 Z" },
-            { id: "tarragones", name: "Tarragonès", capital: "Tarragona", altCapitals: [], vegueria: "Camp de Tarragona", path: "M 295,475 L 350,460 L 335,510 L 295,515 Z" },
-            { id: "baix_penedes", name: "Baix Penedès", capital: "El Vendrell", altCapitals: ["Vendrell"], vegueria: "Penedès", path: "M 350,410 L 395,395 L 385,445 L 345,455 Z" },
-            { id: "alt_penedes", name: "Alt Penedès", capital: "Vilafranca del Penedès", altCapitals: ["Vilafranca"], vegueria: "Penedès", path: "M 375,340 L 425,330 L 415,385 L 370,390 Z" },
-            { id: "garraf", name: "Garraf", capital: "Vilanova i la Geltrú", altCapitals: ["Vilanova"], vegueria: "Penedès", path: "M 385,445 L 420,435 L 410,470 L 375,475 Z" },
-            { id: "baix_llobregat", name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", altCapitals: ["Sant Feliu"], vegueria: "Àmbit Metropolità", path: "M 425,330 L 460,320 L 450,380 L 415,385 Z" },
-            { id: "barcelones", name: "Barcelonès", capital: "Barcelona", altCapitals: [], vegueria: "Àmbit Metropolità", path: "M 460,320 L 485,315 L 480,350 L 455,355 Z" },
-            { id: "valles_occidental", name: "Vallès Occidental", capital: "Sabadell / Terrassa", altCapitals: ["Sabadell", "Terrassa"], vegueria: "Àmbit Metropolità", path: "M 385,270 L 440,260 L 435,315 L 380,320 Z" },
-            { id: "valles_oriental", name: "Vallès Oriental", capital: "Granollers", altCapitals: [], vegueria: "Àmbit Metropolità", path: "M 440,260 L 500,250 L 490,310 L 435,315 Z" },
-            { id: "maresme", name: "Maresme", capital: "Mataró", altCapitals: [], vegueria: "Àmbit Metropolità", path: "M 490,310 L 540,290 L 515,340 L 475,350 Z" }
+    <script>
+        // Dades de les 43 Comarques de Catalunya amb les seves coordenades (% relativa sobre mapa2.jpg)
+        const COMARQUES = [
+            { name: "Alt Camp", capital: "Valls", x: 34.2, y: 63.5 },
+            { name: "Alt Empordà", capital: "Figueres", x: 64.5, y: 24.0 },
+            { name: "Alt Penedès", capital: "Vilafranca del Penedès", x: 39.5, y: 58.2 },
+            { name: "Alt Urgell", capital: "La Seu d'Urgell", x: 32.5, y: 22.5 },
+            { name: "Alta Ribagorça", capital: "El Pont de Suert", x: 18.0, y: 20.2 },
+            { name: "Anoia", capital: "Igualada", x: 36.5, y: 52.0 },
+            { name: "Bages", capital: "Manresa", x: 42.5, y: 43.5 },
+            { name: "Baix Camp", capital: "Reus", x: 29.2, y: 68.0 },
+            { name: "Baix Ebre", capital: "Tortosa", x: 18.5, y: 78.5 },
+            { name: "Baix Empordà", capital: "La Bisbal d'Empordà", x: 67.5, y: 33.5 },
+            { name: "Baix Llobregat", capital: "Sant Feliu de Llobregat", x: 45.2, y: 56.5 },
+            { name: "Baix Penedès", capital: "El Vendrell", x: 36.2, y: 64.5 },
+            { name: "Barcelonès", capital: "Barcelona", x: 50.2, y: 55.2 },
+            { name: "Berguedà", capital: "Berga", x: 39.5, y: 30.5 },
+            { name: "Cerdanya", capital: "Puigcerdà", x: 40.2, y: 20.0 },
+            { name: "Conca de Barberà", capital: "Montblanc", x: 32.2, y: 56.2 },
+            { name: "Garraf", capital: "Vilanova i la Geltrú", x: 42.0, y: 62.5 },
+            { name: "Garrigues", capital: "Les Borges Blanques", x: 22.5, y: 58.5 },
+            { name: "Garrotxa", capital: "Olot", x: 56.5, y: 25.5 },
+            { name: "Gironès", capital: "Girona", x: 61.2, y: 33.2 },
+            { name: "Lluçanès", capital: "Prats de Lluçanès", x: 46.0, y: 33.0 },
+            { name: "Maresme", capital: "Mataró", x: 57.0, y: 50.5 },
+            { name: "Moianès", capital: "Moià", x: 46.2, y: 40.2 },
+            { name: "Montsià", capital: "Amposta", x: 13.5, y: 87.2 },
+            { name: "Noguera", capital: "Balaguer", x: 23.5, y: 42.5 },
+            { name: "Osona", capital: "Vic", x: 50.2, y: 35.5 },
+            { name: "Pallars Jussà", capital: "Tremp", x: 23.2, y: 30.2 },
+            { name: "Pallars Sobirà", capital: "Sort", x: 25.5, y: 16.2 },
+            { name: "Pla de l'Estany", capital: "Banyoles", x: 58.2, y: 28.5 },
+            { name: "Pla d'Urgell", capital: "Mollerussa", x: 23.2, y: 50.2 },
+            { name: "Priorat", capital: "Falset", x: 25.2, y: 65.5 },
+            { name: "Ribera d'Ebre", capital: "Móra d'Ebre", x: 21.2, y: 68.2 },
+            { name: "Ripollès", capital: "Ripoll", x: 48.2, y: 22.2 },
+            { name: "Segarra", capital: "Cervera", x: 32.2, y: 45.2 },
+            { name: "Segrià", capital: "Lleida", x: 16.2, y: 55.2 },
+            { name: "Selva", capital: "Santa Coloma de Farners", x: 58.2, y: 39.2 },
+            { name: "Solsonès", capital: "Solsona", x: 33.2, y: 35.2 },
+            { name: "Tarragonès", capital: "Tarragona", x: 36.2, y: 68.2 },
+            { name: "Terra Alta", capital: "Gandesa", x: 15.2, y: 72.2 },
+            { name: "Urgell", capital: "Tàrrega", x: 28.2, y: 50.2 },
+            { name: "Val d'Aran", capital: "Vielha e Mijaran", x: 20.2, y: 10.2 },
+            { name: "Vallès Occidental", capital: "Sabadell", x: 47.2, y: 50.2 },
+            { name: "Vallès Oriental", capital: "Granollers", x: 52.2, y: 47.2 }
         ];
 
-        // Avatars list
-        const AVATARS = ["🦊", "🦁", "🦉", "🚀", "🌟", "🎨", "⚽", "🐱", "🐶", "🐼"];
-        let selectedAvatar = "🦊";
-
-        /**
-         * Normalizes text by removing accents, lowercasing, stripping Catalan articles and punctuation.
-         * Example: "L'Alt Urgell" -> "alt urgell", "La Bisbal d'Empordà" -> "bisbal emporda"
-         */
-        window.normalizeText = function(text) {
-            if (!text) return "";
-            let str = text.toLowerCase().trim();
-            // Remove diacritics / accents
-            str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            // Standardize apostrophes and hyphens into spaces
-            str = str.replace(/['’`-]/g, " ");
-            
-            // Tokenize words and strip common Catalan articles and prepositions
-            const words = str.split(/\s+/);
-            const stopWords = new Set(["l", "la", "el", "els", "les", "en", "na", "del", "dels", "d", "de", "des", "i"]);
-            const filtered = words.filter(w => !stopWords.has(w));
-            
-            return filtered.join(" ").trim();
-        };
-
-        /**
-         * Checks if user answer matches target answer or any valid alternate canonical answer
-         */
-        function checkAnswerMatch(userStr, targetStr, altTargets = []) {
-            const normUser = window.normalizeText(userStr);
-            const normTarget = window.normalizeText(targetStr);
-
-            if (!normUser) return false;
-            if (normUser === normTarget) return true;
-
-            // Check alternate targets
-            for (let alt of altTargets) {
-                if (normUser === window.normalizeText(alt)) return true;
-            }
-
-            // Also check full string without stripping articles in case user typed exact
-            const rawUser = userStr.toLowerCase().replace(/['’`-]/g, " ").trim();
-            const rawTarget = targetStr.toLowerCase().replace(/['’`-]/g, " ").trim();
-            if (rawUser === rawTarget) return true;
-
-            return false;
-        }
-
-        // Audio Synthesizer
-        let soundEnabled = true;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        window.toggleSound = function() {
-            soundEnabled = !soundEnabled;
-            const btnIcon = document.getElementById("soundIcon");
-            if (soundEnabled) {
-                btnIcon.className = "fa-solid fa-volume-high text-sky-600";
-            } else {
-                btnIcon.className = "fa-solid fa-volume-xmark text-slate-400";
-            }
-        };
-
-        function playSound(type) {
-            if (!soundEnabled) return;
-            try {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'correct') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.35);
-                } else if (type === 'wrong') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
-                    osc.frequency.exponentialRampToValueAtTime(146.83, audioCtx.currentTime + 0.2); // D3
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'fanfare') {
-                    const notes = [523.25, 659.25, 783.99, 1046.50];
-                    notes.forEach((freq, idx) => {
-                        const o = audioCtx.createOscillator();
-                        const g = audioCtx.createGain();
-                        o.connect(g);
-                        g.connect(audioCtx.destination);
-                        o.frequency.value = freq;
-                        g.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.12);
-                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.12 + 0.3);
-                        o.start(audioCtx.currentTime + idx * 0.12);
-                        o.stop(audioCtx.currentTime + idx * 0.12 + 0.3);
-                    });
-                }
-            } catch(e) {
-                console.warn("Audio Context blocked or uninitialized");
-            }
-        }
-
-        // Game State
-        let currentUser = "Alumne";
-        let questionsList = [];
-        let currentQIndex = 0;
-        let score = 0;
+        // Estat del joc
+        let currentMode = 'map'; // 'map' o 'capital'
+        let currentQuestions = [];
+        let currentIndex = 0;
         let correctCount = 0;
-        let streak = 0;
-        let maxStreak = 0;
-        let timerSeconds = 300; // 5 minutes total for 30 questions
+        let errorCount = 0;
+        let timerSeconds = 0;
         let timerInterval = null;
-        let gameTimeElapsed = 0;
-        let activeQuestion = null;
-        let isAnswerSubmitted = false;
 
-        // Initialize UI Elements & Event Listeners
-        window.addEventListener('DOMContentLoaded', () => {
-            renderAvatarSelector();
-            renderSvgMap();
-            loadLeaderboard();
+        // Web Audio API per als efectes de so
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-            // Keyboard Enter key submit support
-            document.getElementById("userAnswerInput").addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!isAnswerSubmitted) {
-                        window.submitTextAnswer();
-                    } else {
-                        window.nextQuestion();
-                    }
-                }
-            });
-        });
-
-        // Render Avatar Selector
-        function renderAvatarSelector() {
-            const container = document.getElementById("avatarSelector");
-            container.innerHTML = "";
-            AVATARS.forEach(av => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = `text-2xl p-2 rounded-xl transition border-2 ${av === selectedAvatar ? 'bg-sky-200 border-sky-500 scale-110' : 'bg-white border-slate-200 hover:bg-slate-100'}`;
-                btn.innerText = av;
-                btn.onclick = () => {
-                    selectedAvatar = av;
-                    renderAvatarSelector();
-                };
-                container.appendChild(btn);
-            });
+            if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
         }
 
-        // Render SVG Map Paths
-        function renderSvgMap() {
-            const svg = document.getElementById("cataloniaMapSvg");
-            svg.innerHTML = "";
+        // Algorisme de normalització de text (ignora accents, majúscules i caràcters especials)
+        function normalizeText(str) {
+            return str
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[''’\-]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
 
-            // Colors for vegueria regions
-            const vegueriaColors = {
-                "Alt Pirineu": "#bae6fd",
-                "Comarques Gironines": "#bbf7d0",
-                "Ponent": "#fef08a",
-                "Comarques Centrals": "#fed7aa",
-                "Camp de Tarragona": "#fbcfe8",
-                "Terres de l'Ebre": "#e9d5ff",
-                "Penedès": "#ddd6fe",
-                "Àmbit Metropolità": "#c7d2fe"
-            };
+        // Inicialització dels Pins al Mapa
+        function initMapPins() {
+            const wrapper = document.getElementById('mapWrapper');
+            // Elimina pins antics
+            document.querySelectorAll('.comarca-pin').forEach(el => el.remove());
 
-            COMARQUES_DATA.forEach(c => {
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", c.path);
-                path.setAttribute("id", `map_path_${c.id}`);
-                path.setAttribute("class", "comarca-path");
-                path.setAttribute("fill", vegueriaColors[c.vegueria] || "#e2e8f0");
-                
-                // Mouse hover events for tooltips
-                path.addEventListener("mouseenter", (e) => showTooltip(e, c.name));
-                path.addEventListener("mousemove", (e) => updateTooltipPos(e));
-                path.addEventListener("mouseleave", hideTooltip);
-                
-                // Click handler for map location questions
-                path.addEventListener("click", () => handleMapClick(c));
+            COMARQUES.forEach((c, idx) => {
+                const pin = document.createElement('div');
+                pin.className = 'comarca-pin';
+                pin.style.left = c.x + '%';
+                pin.style.top = c.y + '%';
+                pin.dataset.index = idx;
+                pin.innerText = (idx + 1);
 
-                svg.appendChild(path);
+                const tooltip = document.getElementById('tooltip');
+                pin.addEventListener('mouseenter', (e) => {
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = `<strong>${c.name}</strong><br>Capital: ${c.capital}`;
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY - 30) + 'px';
+                });
+
+                pin.addEventListener('mouseleave', () => {
+                    tooltip.style.display = 'none';
+                });
+
+                pin.addEventListener('click', () => onPinClick(idx));
+                wrapper.appendChild(pin);
             });
         }
 
-        // Map Tooltip logic
-        function showTooltip(e, text) {
-            const tooltip = document.getElementById("mapTooltip");
-            tooltip.innerText = text;
-            tooltip.style.opacity = "1";
-            updateTooltipPos(e);
+        function setGameMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
+            document.getElementById('modeCapitalBtn').classList.toggle('active', mode === 'capital');
+            document.getElementById('capitalInputContainer').style.display = mode === 'capital' ? 'block' : 'none';
+            restartGame();
         }
 
-        function updateTooltipPos(e) {
-            const tooltip = document.getElementById("mapTooltip");
-            const rect = e.target.ownerSVGElement.getBoundingClientRect();
-            tooltip.style.left = (e.clientX - rect.left + 10) + "px";
-            tooltip.style.top = (e.clientY - rect.top - 25) + "px";
-        }
-
-        function hideTooltip() {
-            document.getElementById("mapTooltip").style.opacity = "0";
-        }
-
-        // Start Quiz Handler
-        window.handleStartQuiz = function(event) {
-            event.preventDefault();
-            const inputName = document.getElementById("usernameInput").value.trim();
-            if (!inputName) return;
-
-            currentUser = inputName;
-            document.getElementById("userNameHeader").innerText = currentUser;
-            document.getElementById("userAvatarHeader").innerText = selectedAvatar;
-            document.getElementById("userInfoHeader").classList.remove("hidden");
-
-            // Reset Game Stats
-            score = 0;
+        function restartGame() {
+            // Mesclar preguntes
+            currentQuestions = [...COMARQUES].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
             correctCount = 0;
-            streak = 0;
-            maxStreak = 0;
-            currentQIndex = 0;
-            timerSeconds = 300;
-            gameTimeElapsed = 0;
+            errorCount = 0;
+            timerSeconds = 0;
 
-            generateQuestions();
-            
-            // Switch Screens
-            document.getElementById("screenStart").classList.add("hidden");
-            document.getElementById("screenQuiz").classList.remove("hidden");
-            document.getElementById("screenResults").classList.add("hidden");
-
-            startTimer();
-            loadQuestion(0);
-        };
-
-        // Navigation back to Home
-        window.goToHome = function() {
             clearInterval(timerInterval);
-            document.getElementById("screenStart").classList.remove("hidden");
-            document.getElementById("screenQuiz").classList.add("hidden");
-            document.getElementById("screenResults").classList.add("hidden");
-            loadLeaderboard();
-        };
-
-        // Generate 30 Random Questions of 3 Varied Types
-        function generateQuestions() {
-            questionsList = [];
-            // Shuffle copy of comarques dataset
-            const shuffledComarques = [...COMARQUES_DATA].sort(() => 0.5 - Math.random());
-            
-            // Repeat to reach exactly 30 questions
-            let pool = [];
-            while (pool.length < 30) {
-                pool = pool.concat([...COMARQUES_DATA].sort(() => 0.5 - Math.random()));
-            }
-            pool = pool.slice(0, 30);
-
-            const questionTypes = [1, 2, 3]; // 1: Identify Comarca, 2: Identify Capital, 3: Find on Map
-
-            pool.forEach((c, idx) => {
-                // Ensure balanced distribution of types
-                const type = questionTypes[idx % 3];
-                questionsList.push({
-                    type: type,
-                    comarca: c
-                });
-            });
-        }
-
-        // Start Countdown Timer
-        function startTimer() {
-            clearInterval(timerInterval);
-            updateTimerDisplay();
             timerInterval = setInterval(() => {
-                timerSeconds--;
-                gameTimeElapsed++;
-                updateTimerDisplay();
-
-                if (timerSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    finishQuiz();
-                }
+                timerSeconds++;
+                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                const secs = String(timerSeconds % 60).padStart(2, '0');
+                document.getElementById('statTime').innerText = `${mins}:${secs}`;
             }, 1000);
-        }
 
-        function updateTimerDisplay() {
-            const min = Math.floor(timerSeconds / 60);
-            const sec = timerSeconds % 60;
-            const formatted = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-            const timerEl = document.getElementById("hudTimer");
-            const container = document.getElementById("timerContainer");
-            
-            timerEl.innerText = formatted;
-
-            if (timerSeconds <= 45) {
-                container.className = "bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1.5 rounded-xl font-extrabold text-sm flex items-center space-x-2 animate-bounce";
-            } else {
-                container.className = "bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-xl font-extrabold text-sm flex items-center space-x-2";
-            }
-        }
-
-        // Load specific question UI
-        function loadQuestion(index) {
-            isAnswerSubmitted = false;
-            activeQuestion = questionsList[index];
-
-            // Reset Map Styles
-            resetMapHighlights();
-
-            // Reset Feedback & Buttons
-            document.getElementById("feedbackBox").className = "hidden p-4 rounded-2xl border-2 transition-all";
-            document.getElementById("nextQuestionBtn").classList.add("hidden");
-            document.getElementById("submitAnswerBtn").classList.remove("hidden");
-            document.getElementById("userAnswerInput").value = "";
-
-            // Update HUD
-            document.getElementById("hudQuestionCurrent").innerText = index + 1;
-            document.getElementById("hudScore").innerText = `${score} Punts`;
-            const acc = currentQIndex > 0 ? Math.round((correctCount / currentQIndex) * 100) : 100;
-            document.getElementById("hudAccuracy").innerText = `Encerts: ${acc}%`;
-
-            const promptText = document.getElementById("questionPromptText");
-            const subPrompt = document.getElementById("questionSubPrompt");
-            const badge = document.getElementById("qTypeBadge");
-            const inputContainer = document.getElementById("inputAnswerContainer");
-            const clickNotice = document.getElementById("clickMapNotice");
-            const hint = document.getElementById("mapInstructionHint");
-
-            if (activeQuestion.type === 1) {
-                // Type 1: Identify Comarca from highlighted map
-                badge.innerText = "Tipus 1: Nom de Comarca";
-                badge.className = "bg-sky-100 text-sky-800 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide";
-                promptText.innerText = "Quina comarca és la que s'il·lumina al mapa?";
-                subPrompt.innerText = "Escriu el nom de la comarca destacada:";
-                inputContainer.classList.remove("hidden");
-                clickNotice.classList.add("hidden");
-                hint.innerText = "Observa la comarca groga";
-
-                // Highlight target comarca
-                highlightComarcaOnMap(activeQuestion.comarca.id, "comarca-active");
-                document.getElementById("userAnswerInput").focus();
-
-            } else if (activeQuestion.type === 2) {
-                // Type 2: Identify Capital
-                badge.innerText = "Tipus 2: Capital";
-                badge.className = "bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide";
-                promptText.innerHTML = `Quina és la capital de la comarca d'<strong>${activeQuestion.comarca.name}</strong>?`;
-                subPrompt.innerText = "Escriu el nom de la capital:";
-                inputContainer.classList.remove("hidden");
-                clickNotice.classList.add("hidden");
-                hint.innerText = activeQuestion.comarca.name;
-
-                // Highlight target comarca
-                highlightComarcaOnMap(activeQuestion.comarca.id, "comarca-active");
-                document.getElementById("userAnswerInput").focus();
-
-            } else if (activeQuestion.type === 3) {
-                // Type 3: Find on Map by clicking
-                badge.innerText = "Tipus 3: Ubicació al Mapa";
-                badge.className = "bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide";
-                promptText.innerHTML = `Fes clic sobre la comarca d'<strong>${activeQuestion.comarca.name}</strong> al mapa!`;
-                subPrompt.innerText = "Troba-la i clica directament sobre la seva forma:";
-                inputContainer.classList.add("hidden");
-                clickNotice.classList.remove("hidden");
-                hint.innerText = `Clica: ${activeQuestion.comarca.name}`;
-            }
-        }
-
-        function resetMapHighlights() {
-            const paths = document.querySelectorAll(".comarca-path");
-            paths.forEach(p => {
-                p.classList.remove("comarca-active", "comarca-correct", "comarca-wrong");
-            });
-        }
-
-        function highlightComarcaOnMap(comarcaId, className) {
-            const el = document.getElementById(`map_path_${comarcaId}`);
-            if (el) {
-                el.classList.add(className);
-            }
-        }
-
-        // Submit Text Answer Handler (Types 1 and 2)
-        window.submitTextAnswer = function() {
-            if (isAnswerSubmitted) return;
-            const inputVal = document.getElementById("userAnswerInput").value.trim();
-            if (!inputVal) return;
-
-            isAnswerSubmitted = true;
-            let isCorrect = false;
-            let expectedText = "";
-
-            if (activeQuestion.type === 1) {
-                // Expecting comarca name
-                isCorrect = checkAnswerMatch(inputVal, activeQuestion.comarca.name);
-                expectedText = activeQuestion.comarca.name;
-            } else if (activeQuestion.type === 2) {
-                // Expecting capital
-                isCorrect = checkAnswerMatch(inputVal, activeQuestion.comarca.capital, activeQuestion.comarca.altCapitals);
-                expectedText = activeQuestion.comarca.capital;
-            }
-
-            processAnswerResult(isCorrect, expectedText);
-        };
-
-        // Handle Map Click Handler (Type 3)
-        function handleMapClick(clickedComarca) {
-            if (isAnswerSubmitted || activeQuestion.type !== 3) return;
-
-            isAnswerSubmitted = true;
-            const isCorrect = (clickedComarca.id === activeQuestion.comarca.id);
-
-            // Highlight clicked path red if wrong
-            if (!isCorrect) {
-                highlightComarcaOnMap(clickedComarca.id, "comarca-wrong");
-            }
-            // Always highlight target in green
-            highlightComarcaOnMap(activeQuestion.comarca.id, "comarca-correct");
-
-            processAnswerResult(isCorrect, activeQuestion.comarca.name);
-        }
-
-        // Process Feedback, Points, and Sounds
-        function processAnswerResult(isCorrect, correctAnswerText) {
-            const fbBox = document.getElementById("feedbackBox");
-            const fbIcon = document.getElementById("feedbackIcon");
-            const fbTitle = document.getElementById("feedbackTitle");
-            const fbText = document.getElementById("feedbackText");
-
-            document.getElementById("submitAnswerBtn").classList.add("hidden");
-            document.getElementById("nextQuestionBtn").classList.remove("hidden");
-
-            if (isCorrect) {
-                playSound('correct');
-                score += 100 + (streak * 10); // Bonus for streak
-                correctCount++;
-                streak++;
-                if (streak > maxStreak) maxStreak = streak;
-
-                fbBox.className = "p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-300 text-emerald-900 transition-all";
-                fbIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
-                fbTitle.innerText = "Excel·lent! Resposta Correcta 🎉";
-                fbText.innerText = streak > 1 ? `Portes una ràtxa de ${streak} encerts consecutius!` : "Molt bé, segueix així!";
-
-                if (activeQuestion.type !== 3) {
-                    highlightComarcaOnMap(activeQuestion.comarca.id, "comarca-correct");
-                }
-            } else {
-                playSound('wrong');
-                streak = 0;
-
-                fbBox.className = "p-4 rounded-2xl border-2 bg-rose-50 border-rose-300 text-rose-900 transition-all";
-                fbIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500"></i>`;
-                fbTitle.innerText = "Oooh, gairebé!";
-                fbText.innerText = `La resposta correcta era: ${correctAnswerText}`;
-
-                if (activeQuestion.type !== 3) {
-                    highlightComarcaOnMap(activeQuestion.comarca.id, "comarca-wrong");
-                }
-            }
-
-            fbBox.classList.remove("hidden");
-        }
-
-        // Advance to Next Question or Finish
-        window.nextQuestion = function() {
-            currentQIndex++;
-            if (currentQIndex < 30 && timerSeconds > 0) {
-                loadQuestion(currentQIndex);
-            } else {
-                finishQuiz();
-            }
-        };
-
-        // Finish Quiz
-        function finishQuiz() {
-            clearInterval(timerInterval);
-            playSound('fanfare');
-
-            // Trigger celebration confetti
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
-            }
-
-            const accuracy = Math.round((correctCount / 30) * 100);
-            const timeFormatted = `${Math.floor(gameTimeElapsed / 60).toString().padStart(2, '0')}:${(gameTimeElapsed % 60).toString().padStart(2, '0')}`;
-
-            // Rank Titles
-            let rankTitle = "Geògraf Novell 🧭";
-            if (accuracy >= 90) rankTitle = "Mestre/a Suprem de Catalunya 🏆✨";
-            else if (accuracy >= 75) rankTitle = "Explorador/a Expert/a 🗺️⭐";
-            else if (accuracy >= 50) rankTitle = "Aventurer/a de les Comarques 🎒";
-
-            // Update Results Screen UI
-            document.getElementById("resUserName").innerText = currentUser;
-            document.getElementById("resRankBadge").innerText = rankTitle;
-            document.getElementById("resScore").innerText = score;
-            document.getElementById("resCorrect").innerText = `${correctCount}/30`;
-            document.getElementById("resAccuracy").innerText = `(${accuracy}%)`;
-            document.getElementById("resTime").innerText = timeFormatted;
-            document.getElementById("resStreak").innerText = maxStreak;
-
-            // Save to Firebase / LocalStorage Leaderboard
-            saveLeaderboardEntry({
-                name: currentUser,
-                avatar: selectedAvatar,
-                score: score,
-                accuracy: accuracy,
-                timeSec: gameTimeElapsed,
-                date: new Date().toISOString()
+            // Netejar classes visual dels pins
+            document.querySelectorAll('.comarca-pin').forEach(pin => {
+                pin.className = 'comarca-pin';
             });
 
-            // Show Screen
-            document.getElementById("screenQuiz").classList.add("hidden");
-            document.getElementById("screenResults").classList.remove("hidden");
+            updateStats();
+            showCurrentQuestion();
         }
 
-        window.restartQuiz = function() {
-            document.getElementById("startForm").dispatchEvent(new Event('submit'));
-        };
-
-        // Save Score Entry to Firestore with LocalStorage Fallback
-        async function saveLeaderboardEntry(entry) {
-            // LocalStorage Save
-            try {
-                let localData = JSON.parse(localStorage.getItem("comarques_leaderboard") || "[]");
-                localData.push(entry);
-                // Keep top 20 sorted by score
-                localData.sort((a, b) => b.score - a.score || a.timeSec - b.timeSec);
-                localData = localData.slice(0, 20);
-                localStorage.setItem("comarques_leaderboard", JSON.stringify(localData));
-            } catch(e) {
-                console.warn("LocalStorage save error", e);
-            }
-
-            // Firestore Save
-            if (db && auth && auth.currentUser) {
-                try {
-                    const docId = `${entry.name.replace(/\s+/g, '_')}_${Date.now()}`;
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', docId);
-                    await setDoc(docRef, entry);
-                } catch(e) {
-                    console.warn("Firestore save entry error", e);
-                }
-            }
-        }
-
-        // Load and Display Leaderboard
-        window.loadLeaderboard = async function() {
-            const container = document.getElementById("leaderboardList");
-            container.innerHTML = `
-                <div class="text-center py-8 text-slate-400">
-                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-sky-500"></i>
-                    <p class="text-xs">Carregant la millor classificació...</p>
-                </div>
-            `;
-
-            let items = [];
-
-            // Try Firestore
-            if (db && auth) {
-                try {
-                    const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-                    const snapshot = await getDocs(colRef);
-                    snapshot.forEach(doc => {
-                        items.push(doc.data());
-                    });
-                } catch(e) {
-                    console.warn("Firestore read error, falling back to local storage", e);
-                }
-            }
-
-            // Fallback to LocalStorage if empty or failed
-            if (items.length === 0) {
-                try {
-                    items = JSON.parse(localStorage.getItem("comarques_leaderboard") || "[]");
-                } catch(e) {
-                    items = [];
-                }
-            }
-
-            // Sort in JS Memory (Rule 2: No complex firestore compound queries)
-            items.sort((a, b) => (b.score - a.score) || (a.timeSec - b.timeSec));
-            const topList = items.slice(0, 10);
-
-            if (topList.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-award text-3xl mb-2 text-slate-300"></i>
-                        <p class="text-xs font-semibold">Encara no hi ha puntuacions registrades.</p>
-                        <p class="text-xs text-slate-400">Siga el primer en jugar!</p>
-                    </div>
-                `;
+        function showCurrentQuestion() {
+            if (currentIndex >= currentQuestions.length) {
+                endGame();
                 return;
             }
 
-            container.innerHTML = "";
-            topList.forEach((item, index) => {
-                const rankBadgeClass = index === 0 ? "bg-amber-400 text-white" :
-                                       index === 1 ? "bg-slate-300 text-slate-800" :
-                                       index === 2 ? "bg-amber-600 text-white" : "bg-slate-100 text-slate-600";
-                
-                const timeMinSec = `${Math.floor((item.timeSec || 0) / 60)}m ${(item.timeSec || 0) % 60}s`;
+            const current = currentQuestions[currentIndex];
+            const titleEl = document.getElementById('questionTitle');
+            const targetEl = document.getElementById('questionTarget');
 
-                const row = document.createElement("div");
-                row.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-sky-50 transition border border-slate-100";
-                row.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="w-7 h-7 flex items-center justify-center rounded-xl font-black text-xs ${rankBadgeClass}">
-                            ${index + 1}
-                        </span>
-                        <span class="text-xl">${item.avatar || '🦊'}</span>
-                        <div>
-                            <p class="font-bold text-sm text-slate-800 leading-tight">${item.name}</p>
-                            <p class="text-xs text-slate-400 font-medium">${item.accuracy || 0}% encerts • ${timeMinSec}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="font-black text-indigo-600 text-base">${item.score}</span>
-                        <span class="text-xs text-slate-400 block font-bold">pts</span>
-                    </div>
-                `;
-                container.appendChild(row);
+            titleEl.innerText = `Pregunta ${currentIndex + 1} de ${currentQuestions.length}`;
+
+            // Treure highlight del pin anterior
+            document.querySelectorAll('.comarca-pin').forEach(p => p.classList.remove('active-target'));
+
+            if (currentMode === 'map') {
+                targetEl.innerText = current.name;
+            } else {
+                targetEl.innerText = current.name;
+                // En mode capital highlight a la comarca
+                const pinIndex = COMARQUES.findIndex(c => c.name === current.name);
+                const pin = document.querySelector(`.comarca-pin[data-index="${pinIndex}"]`);
+                if (pin) pin.classList.add('active-target');
+                document.getElementById('capitalInput').value = '';
+                document.getElementById('capitalInput').focus();
+            }
+        }
+
+        function onPinClick(idx) {
+            if (currentMode !== 'map') return;
+
+            const target = currentQuestions[currentIndex];
+            const clicked = COMARQUES[idx];
+            const pin = document.querySelector(`.comarca-pin[data-index="${idx}"]`);
+
+            if (clicked.name === target.name) {
+                playSound('correct');
+                pin.classList.add('correct');
+                correctCount++;
+                currentIndex++;
+                updateStats();
+                showCurrentQuestion();
+            } else {
+                playSound('wrong');
+                pin.classList.add('wrong');
+                setTimeout(() => pin.classList.remove('wrong'), 500);
+                errorCount++;
+                updateStats();
+            }
+        }
+
+        function checkCapitalAnswer() {
+            if (currentMode !== 'capital') return;
+
+            const inputVal = document.getElementById('capitalInput').value;
+            const target = currentQuestions[currentIndex];
+            const normalizedInput = normalizeText(inputVal);
+            const normalizedCapital = normalizeText(target.capital);
+
+            if (normalizedInput === normalizedCapital) {
+                playSound('correct');
+                correctCount++;
+                currentIndex++;
+                updateStats();
+                showCurrentQuestion();
+            } else {
+                playSound('wrong');
+                errorCount++;
+                updateStats();
+                const inputEl = document.getElementById('capitalInput');
+                inputEl.style.borderColor = '#ef4444';
+                setTimeout(() => inputEl.style.borderColor = '#cbd5e1', 600);
+            }
+        }
+
+        // Permet enviar la resposta premant la tecla Enter
+        document.getElementById('capitalInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkCapitalAnswer();
+            }
+        });
+
+        function updateStats() {
+            document.getElementById('statCorrect').innerText = correctCount;
+            document.getElementById('statErrors').innerText = errorCount;
+            const total = correctCount + errorCount;
+            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 100;
+            document.getElementById('statAccuracy').innerText = accuracy + '%';
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            playSound('correct');
+            confetti({
+                particleCount: 120,
+                spread: 70,
+                origin: { y: 0.6 }
             });
-        };
+
+            const accuracy = document.getElementById('statAccuracy').innerText;
+            const time = document.getElementById('statTime').innerText;
+            document.getElementById('questionTarget').innerText = "🎉 Joc Completat!";
+            alert(`Felicitats! Has completat totes les preguntes.\nPrecisió: ${accuracy}\nTemps: ${time}`);
+        }
+
+        // Inicialització al carregar la pàgina
+        window.addEventListener('load', () => {
+            initMapPins();
+            restartGame();
+        });
     </script>
 </body>
 </html>
