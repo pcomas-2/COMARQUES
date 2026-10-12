@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comarques de Catalunya - Quiz Interactiu</title>
+  <title>Comarques i Capitals de Catalunya - Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
       --primary: #4F46E5;
       --primary-hover: #4338CA;
-      --secondary: #06B6D4;
       --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #F0FDFA 50%, #FEF3C7 100%);
       --card-bg: rgba(255, 255, 255, 0.98);
       --text-main: #1E293B;
@@ -38,10 +37,10 @@
 
     .app-container {
       width: 100%;
-      max-width: 800px;
+      max-width: 750px;
       background: var(--card-bg);
       border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
       border: 2px solid rgba(255, 255, 255, 0.8);
       overflow: hidden;
       display: flex;
@@ -67,7 +66,7 @@
       margin-top: 4px;
     }
 
-    /* GESTIÓ DE PANTALLES */
+    /* CONTROL NET DE PANTALLES SENSE CONFLICTES */
     .screen {
       display: none;
       padding: 30px;
@@ -172,10 +171,9 @@
       transform: translateY(-2px);
     }
 
-    /* QUIZZ LAYOUT */
+    /* PANTALLA DEL QUIZZ */
     .quiz-container {
       width: 100%;
-      max-width: 650px;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -206,20 +204,20 @@
       background: white;
       border: 2px solid #E2E8F0;
       border-radius: 20px;
-      padding: 30px;
+      padding: 35px 25px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.03);
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 20px;
+      gap: 22px;
     }
 
     .question-tag {
       background: #EEF2FF;
       color: var(--primary);
       font-weight: 700;
-      padding: 6px 16px;
+      padding: 6px 18px;
       border-radius: 20px;
       font-size: 0.95rem;
       text-transform: uppercase;
@@ -227,20 +225,14 @@
     }
 
     .question-text {
-      font-size: 1.5rem;
+      font-size: 1.55rem;
       font-weight: 700;
       color: #0F172A;
-      line-height: 1.4;
+      line-height: 1.45;
       min-height: 70px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .question-text highlight {
-      color: var(--primary);
-      text-decoration: underline;
-      text-decoration-color: #A5B4FC;
     }
 
     .answer-form {
@@ -254,7 +246,7 @@
       padding: 16px 20px;
       border: 2px solid #CBD5E1;
       border-radius: 14px;
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       outline: none;
       text-align: center;
       font-weight: 600;
@@ -359,7 +351,7 @@
 
 <div class="app-container">
   <header>
-    <h1>🗺️ Comarques de Catalunya</h1>
+    <h1>🗺️ Comarques i Capitals de Catalunya</h1>
     <p>Aprèn, juga i posa a prova els teus coneixements de geografia!</p>
   </header>
 
@@ -420,27 +412,3 @@
         </div>
         <div class="stat-badge">
           <span>📊 Encerts:</span> <span id="accuracy-display">0%</span>
-        </div>
-      </div>
-
-      <!-- TARGETA DE PREGUNTA -->
-      <div class="question-card">
-        <div class="question-tag" id="question-tag">Capital de Comarca</div>
-        <div class="question-text" id="question-text">Carregant pregunta...</div>
-
-        <div class="answer-form">
-          <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta aquí..." autocomplete="off">
-          <button type="button" class="submit-btn" onclick="checkAnswer()">Respondre</button>
-        </div>
-
-        <div id="feedback-box" class="feedback-message"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PANTALLA 3: RESULTATS -->
-  <div id="screen-results" class="screen">
-    <div class="welcome-card">
-      <div class="results-summary">
-        <h2>🎉 Felicitats!</h2>
-        <p style="font-size: 1.15rem; margin-top
