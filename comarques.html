@@ -17,11 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Fredoka', 'Quicksand', sans-serif;
@@ -32,314 +28,67 @@
             user-select: none;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { font-size: 2.2rem; color: #0369a1; text-shadow: 2px 2px 0px #bae6fd; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        header p { color: #475569; font-size: 1.1rem; margin-top: 5px; }
 
-        header h1 {
-            font-size: 2.2rem;
-            color: #0369a1;
-            text-shadow: 2px 2px 0px #bae6fd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        @media (max-width: 992px) { .main-layout { grid-template-columns: 1fr; } }
 
-        header p {
-            color: #475569;
-            font-size: 1.1rem;
-            margin-top: 5px;
-        }
+        .map-card { background: #ffffff; border-radius: 20px; padding: 15px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
+        .map-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #f8fafc; padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0; }
 
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .file-upload-btn { font-size: 0.85rem; background: #0284c7; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .file-upload-btn:hover { background: #0369a1; }
 
-        @media (max-width: 992px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-        }
+        .map-wrapper { position: relative; width: 100%; min-height: 500px; border-radius: 12px; overflow: hidden; border: 2px solid #bae6fd; background-color: #e0f2fe; display: flex; align-items: center; justify-content: center; }
+        .map-image { width: 100%; height: auto; display: block; }
 
-        /* Contenidor del Mapa */
-        .map-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-
-        .map-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            background: #f8fafc;
-            padding: 8px 14px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .file-upload-btn {
-            font-size: 0.85rem;
-            background: #0284c7;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-        }
-
-        .file-upload-btn:hover {
-            background: #0369a1;
-        }
-
-        .map-wrapper {
-            position: relative;
-            width: 100%;
-            min-height: 500px;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #bae6fd;
-            background-color: #e0f2fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .map-image {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* Pins interactius de les comarques */
         .comarca-pin {
-            position: absolute;
-            width: 26px;
-            height: 26px;
-            margin-left: -13px;
-            margin-top: -13px;
-            border-radius: 50%;
-            background: rgba(2, 132, 199, 0.9);
-            border: 2px solid #ffffff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 10;
+            position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -13px;
+            border-radius: 50%; background: rgba(2, 132, 199, 0.9); border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35); cursor: pointer; transition: transform 0.2s, background 0.2s;
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; z-index: 10;
         }
 
-        .comarca-pin:hover {
-            transform: scale(1.4);
-            background: #f59e0b;
-            z-index: 25;
-        }
-
-        .comarca-pin.correct {
-            background: #22c55e !important;
-            transform: scale(1.2);
-        }
-
-        .comarca-pin.wrong {
-            background: #ef4444 !important;
-            animation: shake 0.4s ease;
-        }
-
-        .comarca-pin.active-target {
-            background: #facc15 !important;
-            color: #0f172a;
-            border-color: #d97706;
-            animation: pulseGlow 1.2s infinite alternate;
-            z-index: 30;
-        }
+        .comarca-pin:hover { transform: scale(1.4); background: #f59e0b; z-index: 25; }
+        .comarca-pin.correct { background: #22c55e !important; transform: scale(1.2); }
+        .comarca-pin.wrong { background: #ef4444 !important; animation: shake 0.4s ease; }
+        .comarca-pin.active-target { background: #facc15 !important; color: #0f172a; border-color: #d97706; animation: pulseGlow 1.2s infinite alternate; z-index: 30; }
 
         @keyframes pulseGlow {
-            from {
-                box-shadow: 0 0 0 0px rgba(250, 204, 21, 0.9);
-                transform: scale(1);
-            }
-            to {
-                box-shadow: 0 0 0 14px rgba(250, 204, 21, 0);
-                transform: scale(1.35);
-            }
+            from { box-shadow: 0 0 0 0px rgba(250, 204, 21, 0.9); transform: scale(1); }
+            to { box-shadow: 0 0 0 14px rgba(250, 204, 21, 0); transform: scale(1.35); }
         }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-4px); }
-            40%, 80% { transform: translateX(4px); }
-        }
+        .tooltip { position: absolute; background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; pointer-events: none; display: none; z-index: 100; white-space: nowrap; }
 
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            background: #0f172a;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            pointer-events: none;
-            display: none;
-            z-index: 100;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-        }
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .game-status { text-align: center; }
+        .question-box { background: #f0f9ff; border: 2px dashed #38bdf8; border-radius: 16px; padding: 15px; margin: 15px 0; }
+        .question-box h3 { font-size: 0.95rem; color: #0284c7; text-transform: uppercase; }
+        .question-target { font-size: 1.6rem; color: #0f172a; font-weight: 700; margin-top: 5px; }
 
-        /* Sidebar & Targetes */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        .input-group { display: flex; gap: 8px; margin-top: 10px; }
+        .input-group input { flex: 1; padding: 10px 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-family: inherit; font-size: 1rem; outline: none; }
 
-        .card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
+        .btn { background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:hover { background: #0369a1; transform: translateY(-2px); }
+        .btn-success { background: #22c55e; } .btn-success:hover { background: #16a34a; }
+        .btn-warning { background: #f59e0b; } .btn-warning:hover { background: #d97706; }
 
-        .game-status {
-            text-align: center;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
+        .stat-card { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-card .val { font-size: 1.4rem; font-weight: 700; color: #0284c7; }
+        .stat-card .lbl { font-size: 0.8rem; color: #64748b; }
 
-        .question-box {
-            background: #f0f9ff;
-            border: 2px dashed #38bdf8;
-            border-radius: 16px;
-            padding: 15px;
-            margin: 15px 0;
-        }
+        .mode-selector { display: flex; gap: 8px; margin-bottom: 15px; }
+        .mode-btn { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; border: 2px solid #e2e8f0; background: #ffffff; cursor: pointer; font-family: inherit; font-weight: 600; }
+        .mode-btn.active { background: #e0f2fe; border-color: #0284c7; color: #0369a1; }
 
-        .question-box h3 {
-            font-size: 0.95rem;
-            color: #0284c7;
-            text-transform: uppercase;
-        }
-
-        .question-target {
-            font-size: 1.6rem;
-            color: #0f172a;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .input-group input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 2px solid #cbd5e1;
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .btn {
-            background: #0284c7;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 12px;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            background: #0369a1;
-            transform: translateY(-2px);
-        }
-
-        .btn-success { background: #22c55e; }
-        .btn-success:hover { background: #16a34a; }
-
-        .btn-warning { background: #f59e0b; }
-        .btn-warning:hover { background: #d97706; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .stat-card .val {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #0284c7;
-        }
-
-        .stat-card .lbl {
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .mode-selector {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 8px;
-            font-size: 0.85rem;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            background: #ffffff;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-        }
-
-        .mode-btn.active {
-            background: #e0f2fe;
-            border-color: #0284c7;
-            color: #0369a1;
-        }
-
-        .attribution {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-top: 12px;
-        }
+        .attribution { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -353,10 +102,10 @@
         <div class="map-card">
             <div class="map-controls">
                 <span id="mapStatusText" style="font-size: 0.85rem; color: #475569;">
-                    <i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Mapa estat: Carregant...
+                    <i class="fa-solid fa-spinner fa-spin"></i> Inicialitzant...
                 </span>
                 <label class="file-upload-btn">
-                    <i class="fa-solid fa-file-image"></i> Carregar mapa2_2.jpg
+                    <i class="fa-solid fa-file-image"></i> Seleccionar mapa local
                     <input type="file" id="imageUploader" accept="image/*" style="display: none;" onchange="handleManualImageUpload(event)">
                 </label>
             </div>
@@ -416,7 +165,6 @@
     </div>
 
     <script>
-        // Dades oficials de les 43 Comarques de Catalunya amb coordenades calibrades (% relative)
         const COMARQUES = [
             { name: "Alt Camp", capital: "Valls", x: 34.2, y: 63.5 },
             { name: "Alt Empordà", capital: "Figueres", x: 64.5, y: 24.0 },
@@ -463,12 +211,16 @@
             { name: "Vallès Oriental", capital: "Granollers", x: 52.2, y: 47.2 }
         ];
 
-        // Llista de rutes candidates per trobar la imatge del mapa
+        // Llista exhaustiva de possibles rutes/noms per detectar el fitxer automàticament
         const IMAGE_CANDIDATES = [
-            'mapa2_2.jpg',
+            'arxius/mapa2.jpg',
+            'arxius/mapa2.JPG',
+            'arxius/mapa2.png',
+            'arxius/mapa2.jpeg',
             'arxius/mapa2_2.jpg',
+            'arxius/mapa2',
             'mapa2.jpg',
-            'arxius/mapa2.jpg'
+            'mapa2.png'
         ];
 
         let candidateIndex = 0;
@@ -480,18 +232,16 @@
         let timerSeconds = 0;
         let timerInterval = null;
 
-        // Intentar carregar la imatge provant diferents rutes
         function loadMapImage() {
             const img = document.getElementById('mapImage');
             const statusText = document.getElementById('mapStatusText');
 
             if (candidateIndex < IMAGE_CANDIDATES.length) {
                 const src = IMAGE_CANDIDATES[candidateIndex];
-                statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cercant ${src}...`;
+                statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Provant ruta: <code>${src}</code>...`;
                 img.src = src;
             } else {
-                // Si no es troba cap imatge, activar fons de seguretat
-                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> Selecciona mapa2_2.jpg amb el botó superior`;
+                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> No s'ha trobat la imatge a <code>arxius/mapa2.jpg</code>. Utilitza el botó per carregar-la.`;
                 img.style.display = 'none';
             }
         }
@@ -503,7 +253,7 @@
 
         document.getElementById('mapImage').onload = function() {
             const statusText = document.getElementById('mapStatusText');
-            statusText.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Mapa carregat (${IMAGE_CANDIDATES[candidateIndex]})`;
+            statusText.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Mapa carregat correctament (<code>${IMAGE_CANDIDATES[candidateIndex]}</code>)`;
             this.style.display = 'block';
         };
 
@@ -515,13 +265,12 @@
                     const img = document.getElementById('mapImage');
                     img.src = e.target.result;
                     img.style.display = 'block';
-                    document.getElementById('mapStatusText').innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Fitxer carregar manualment (${file.name})`;
+                    document.getElementById('mapStatusText').innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Fitxer carregat manualment: <strong>${file.name}</strong>`;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        // Efectes de so sintetitzats
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -573,10 +322,7 @@
                     tooltip.style.top = (e.pageY - 30) + 'px';
                 });
 
-                pin.addEventListener('mouseleave', () => {
-                    tooltip.style.display = 'none';
-                });
-
+                pin.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
                 pin.addEventListener('click', () => onPinClick(idx));
                 wrapper.appendChild(pin);
             });
