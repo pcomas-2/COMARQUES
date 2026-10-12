@@ -6,6 +6,7 @@
   <title>Comarques de Catalunya - Quiz Interactiu</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -15,7 +16,7 @@
     <p>Aprèn, juga i posa a prova els teus coneixements de geografia!</p>
   </header>
 
-  <!-- PANTALLA 1: INICI I REGISTRE (Visible per defecte) -->
+  <!-- PANTALLA 1: INICI I REGISTRE -->
   <div id="screen-start" class="screen active" style="display: flex;">
     <div class="welcome-card">
       <div class="input-group">
@@ -35,7 +36,7 @@
         </div>
       </div>
 
-      <button class="start-btn" onclick="startQuiz()">COMENÇAR EL QUIZZ! 🚀</button>
+      <button type="button" class="start-btn" onclick="startQuiz()">COMENÇAR EL QUIZZ! 🚀</button>
 
       <!-- TABLA RÀNKING INICIAL -->
       <div class="ranking-section">
@@ -59,7 +60,7 @@
     </div>
   </div>
 
-  <!-- PANTALLA 2: JOC QUIZZ (Oculta inicialment) -->
+  <!-- PANTALLA 2: JOC QUIZZ -->
   <div id="screen-quiz" class="screen" style="display: none;">
     <div class="quiz-layout">
       <!-- BARRA D'ESTADÍSTIQUES -->
@@ -90,7 +91,7 @@
 
         <div id="input-container" class="answer-form">
           <input type="text" id="user-answer" class="answer-input" placeholder="Escriu la resposta..." autocomplete="off">
-          <button class="submit-btn" onclick="checkAnswer()">Respondre</button>
+          <button type="button" class="submit-btn" onclick="checkAnswer()">Respondre</button>
         </div>
 
         <div id="map-instruction" style="display:none; font-weight:700; color:#0284C7; text-align:center;">
@@ -102,7 +103,7 @@
     </div>
   </div>
 
-  <!-- PANTALLA 3: RESULTATS (Oculta inicialment) -->
+  <!-- PANTALLA 3: RESULTATS -->
   <div id="screen-results" class="screen" style="display: none;">
     <div class="welcome-card">
       <div class="results-summary">
@@ -115,11 +116,10 @@
         </div>
       </div>
 
-      <button class="start-btn" onclick="resetToStart()">TORNAR A JUGAR 🔄</button>
+      <button type="button" class="start-btn" onclick="resetToStart()">TORNAR A JUGAR 🔄</button>
     </div>
   </div>
 </div>
 
-<script src="script.js"></script>
 </body>
 </html>
