@@ -75,12 +75,12 @@
         </div>
       </div>
 
-      <!-- MAPA INTERACTIU EN SVG -->
+      <!-- MAPA INTERACTIU AMB MAPA2.PNG -->
       <div class="map-container" id="map-container">
-        <div id="tooltip" class="map-tooltip">Comarca</div>
-        <svg viewBox="0 0 1000 850" class="catalonia-map" id="catalonia-svg">
-          <!-- Es genera dinàmicament des de script.js -->
-        </svg>
+        <div class="map-wrapper" id="map-wrapper">
+          <img src="mapa2.png" alt="Mapa de Catalunya" id="map-img" onerror="onMapError()">
+          <div id="pins-container"></div>
+        </div>
       </div>
 
       <!-- CAIXA DE PREGUNTES I RESPOSTA -->
@@ -94,7 +94,7 @@
         </div>
 
         <div id="map-instruction" style="display:none; font-weight:700; color:#0284C7; text-align:center;">
-          👇 Fes clic directament sobre la comarca al mapa!
+          👇 Fes clic directament sobre el punt de la comarca al mapa!
         </div>
 
         <div id="feedback-box" class="feedback-message"></div>
